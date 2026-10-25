@@ -2,7 +2,8 @@
 # Builds the site and publishes dist/ to the gh-pages branch of origin.
 set -eu
 cd "$(dirname "$0")/.."
-npm run build
+# The Pages copy has no API of its own: progress goes to the Vercel deployment.
+VITE_SYNC_API=https://piano-akkordy.vercel.app/api/progress npm run build
 git worktree prune
 git branch -D gh-pages >/dev/null 2>&1 || true
 WORK=$(mktemp -d)

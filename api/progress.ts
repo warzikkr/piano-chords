@@ -1,6 +1,6 @@
 import { get, put } from '@vercel/blob'
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleProgress, type ProgressStore } from '../server/progress'
+import { handleProgress, type ProgressStore } from '../server/progress.js'
 
 const blobStore: ProgressStore = {
   async read(key) {

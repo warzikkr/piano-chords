@@ -17,7 +17,6 @@ function tabFor(name: string): TabName | null {
   if (name === 'today' || name === 'map' || name === 'progressions' || name === 'theory' || name === 'reference') return name
   if (name === 'settings') return 'today'
   if (name === 'chord') return 'reference'
-  if (name === 'topic') return 'theory'
   return null
 }
 
