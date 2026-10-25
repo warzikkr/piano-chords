@@ -61,7 +61,7 @@
   - `const LETTER_PC: Record<Letter, Pc>`
   - `pc(midi: Midi): Pc`
   - `noteNamePc(n: NoteName): Pc`
-  - `spellDegree(root: NoteName, degree: number, semitones: number): NoteName` — буква = буква корня + (degree − 1) по кругу, знак = разница полутонов (нормализованная в −6…5); если |знак| = 2, вернуть простое энгармоническое имя (предпочитая знак корня: у корня с бемолем бемоль, иначе диез, у чистой ноты диез).
+  - `spellDegree(root: NoteName, degree: number, semitones: number): NoteName` — буква = буква корня + (degree − 1) по кругу, знак = разница полутонов (нормализованная в −6…5); если |знак| = 2 или знак стоит на белой клавише (E♯, B♯, C♭, F♭), вернуть простое имя белой клавиши (`{letter, 0}`).
   - `type NotationStyle = 'latin' | 'german'`
   - `formatNote(n: NoteName, style: NotationStyle): string` — `'D♭'`, `'F♯'`, `'C'`; в `german`: `{B,0}` → `'H'`, `{B,-1}` → `'B'`, `{B,1}` → `'H♯'`.
   - `syllable(n: NoteName): string` — `'до'`, `'ре-бемоль'`, `'фа-диез'`, `'си'`.
@@ -69,7 +69,7 @@
   - `MAJOR_ROOTS: NoteName[]` (индекс = pc) = C, D♭, D, E♭, E, F, F♯, G, A♭, A, B♭, B; `MINOR_ROOTS: NoteName[]` = C, C♯, D, E♭, E, F, F♯, G, G♯, A, B♭, B.
 
 - [ ] **Step 1: Тесты** в `notes.test.ts`:
-  - `spellDegree({C,0},3,4)` → `{E,0}`; `spellDegree({D,-1},3,4)` → `{F,0}`; `spellDegree({C,1},3,3)` → `{E,0}`; `spellDegree({E,-1},3,3)` → `{G,-1}`; `spellDegree({F,1},7,9)` → `{E,-1}` (dim7); `spellDegree({F,1},5,8)` → `{D,0}` (aug, вместо C𝄪); `spellDegree({C,0},9,14)` → `{D,0}`; `spellDegree({C,0},13,21)` → `{A,0}`.
+  - `spellDegree({C,0},3,4)` → `{E,0}`; `spellDegree({D,-1},3,4)` → `{F,0}`; `spellDegree({C,1},3,3)` → `{E,0}`; `spellDegree({E,-1},3,3)` → `{G,-1}`; `spellDegree({F,1},7,9)` → `{E,-1}` (dim7); `spellDegree({F,1},5,8)` → `{D,0}` (aug, вместо C𝄪); `spellDegree({C,0},9,14)` → `{D,0}`; `spellDegree({C,0},13,21)` → `{A,0}`; `spellDegree({E,0},5,8)` → `{C,0}` (E aug, вместо B♯); `spellDegree({B,-1},5,6)` → `{E,0}` (B♭dim, вместо F♭); `spellDegree({F,0},7,9)` → `{D,0}` (Fdim7, вместо E𝄫).
   - `formatNote({B,0},'german')` → `'H'`, `formatNote({B,-1},'german')` → `'B'`, `formatNote({B,-1},'latin')` → `'B♭'`.
   - `syllable({D,-1})` → `'ре-бемоль'`, `syllable({B,0})` → `'си'`.
   - `MAJOR_ROOTS[6]` → `{F,1}`, `MINOR_ROOTS[1]` → `{C,1}`.
@@ -107,7 +107,7 @@
   - `buildChord({root:1,type:'maj',inversion:0}).names` → D♭ F A♭ (через `formatNote`), `.symbol` → `'D♭'`.
   - `buildChord({root:1,type:'min',inversion:0}).symbol` → `'C♯m'`, names C♯ E G♯.
   - `buildChord({root:6,type:'aug',inversion:0}).names` → F♯ A♯ D.
-  - `buildChord({root:6,type:'dim7',inversion:0}).names` → F♯ A C E♭.
+  - `buildChord({root:6,type:'dim7',inversion:0}).names` → F♯ A C E♭; `{root:4,type:'aug'}` → E G♯ C; `{root:10,type:'dim'}` → B♭ D♭ E.
   - `buildChord({root:0,type:'dom11',inversion:0}).notes` → `[60,67,70,74,77]`.
   - `buildChord({root:11,type:'maj',inversion:0},'german').symbol` → `'H'`; `{root:10,type:'maj'}` german → `'B'`.
   - `inversionsOf('maj')` → 3, `inversionsOf('dom7')` → 4, `inversionsOf('dom9')` → 1.
@@ -195,7 +195,7 @@
   - `type TaskType = 'build'|'recognize'|'spell'|'ear'`
   - `interface AnswerResult { correct: boolean; usedHint: boolean; seconds: number }`
   - `TIME_THRESHOLDS: Record<TaskType, number>` = build 8, recognize 6, spell 8, ear 5.
-  - `ratingFor(task: TaskType, r: AnswerResult): Rating` — wrong → Again; correct+hint → Hard; correct и `seconds < threshold/3` → Easy; иначе Good.
+  - `ratingFor(task: TaskType, r: AnswerResult, optionCount = 4): Rating` — wrong → Again; correct+hint → Hard; correct и `seconds < threshold/3` → Easy; иначе Good. Для `task === 'ear'` при `optionCount <= 2` Easy понижается до Good.
   - `interface StoredCard { due: number; stability: number; difficulty: number; elapsedDays: number; scheduledDays: number; learningSteps: number; reps: number; lapses: number; state: number; lastReview: number | null }` (числа в мс, сериализуемо).
   - `newStoredCard(now: number): StoredCard`
   - `reviewCard(card: StoredCard, rating: Rating, now: number): StoredCard` — через `fsrs().next(...)`.
@@ -203,7 +203,7 @@
   - `type Mastery = 0|1|2|3|4`; `mastery(card: StoredCard | undefined): Mastery` — undefined или reps 0 → 0; stability < 2 → 1; < 10 → 2; < 30 → 3; иначе 4.
   - `MASTERY_LABELS: string[]` = «новый», «учится», «знаю», «уверенно», «выучено».
 
-- [ ] **Step 1: Тесты**: `ratingFor('build',{correct:false,usedHint:false,seconds:1})` → Again; `{correct:true,usedHint:true,seconds:1}` → Hard; `{correct:true,usedHint:false,seconds:2}` → Easy; `{correct:true,usedHint:false,seconds:5}` → Good; `ratingFor('ear',{correct:true,usedHint:false,seconds:1.5})` → Easy. `newStoredCard(t).due` → t, `isDue` → true. После `reviewCard(c, Good, t)` → `reps` 1, `due > t`, `isDue(.., t)` false, `isDue(.., due)` true. Три раза Good с шагом в `scheduledDays` дней → `stability` растёт. `mastery(undefined)` → 0; карточка со stability 15 и reps 3 → 3.
+- [ ] **Step 1: Тесты**: `ratingFor('build',{correct:false,usedHint:false,seconds:1})` → Again; `{correct:true,usedHint:true,seconds:1}` → Hard; `{correct:true,usedHint:false,seconds:2}` → Easy; `{correct:true,usedHint:false,seconds:5}` → Good; `ratingFor('ear',{correct:true,usedHint:false,seconds:1.5})` → Easy; то же с `optionCount` 2 → Good. `newStoredCard(t).due` → t, `isDue` → true. После `reviewCard(c, Good, t)` → `reps` 1, `due > t`, `isDue(.., t)` false, `isDue(.., due)` true. Три раза Good с шагом в `scheduledDays` дней → `stability` растёт. `mastery(undefined)` → 0; карточка со stability 15 и reps 3 → 3.
 - [ ] **Step 2–4: FAIL → реализовать → PASS.** Проверить точные имена полей `Card` в `node_modules/ts-fsrs` перед реализацией конвертеров.
 - [ ] **Step 5: Commit** `feat(learning): fsrs scheduling and mastery levels`
 
@@ -242,17 +242,19 @@
 - Consumes: Tasks 5–8.
 - Produces:
   - `type SessionItem = { kind: 'lesson'; level: Level } | { kind: 'card'; id: CardId; task: TaskType; isNew: boolean } | { kind: 'progression'; progressionId: string; keyRoot: Pc }`
-  - `availableTasks(level: Level): TaskType[]` — всегда build, recognize, spell, ear (слух есть с уровня 1 как мажор/минор).
+  - `EAR_TYPES: ChordTypeId[]` = maj, min, dom7, maj7, min7, dim, aug, sus4.
+  - `availableTasks(spec: ChordSpec): TaskType[]` — build, recognize, spell всегда; ear только если `inversion === 0` и тип в `EAR_TYPES`.
+  - `learnerLevel(p: Progress): Level` — наибольший уровень среди введённых карточек, минимум 1.
   - `earChoices(level: Level): ChordTypeId[]` — L1–3 `['maj','min']`; L4 + `dom7, maj7, min7`; L5–6 + `dim, aug, sus4`.
-  - `pickTask(isNew: boolean, level: Level, rng: () => number, counter: number): TaskType` — new → build; иначе если `rng() < 0.5` → build, иначе по кругу `['recognize','spell','ear'][counter % 3]`.
+  - `earOptions(spec: ChordSpec, level: Level, rng): ChordTypeId[]` — тип карточки плюс остальные из `earChoices(level)` без него, не больше 6 всего, перемешаны.
+  - `pickTask(isNew: boolean, spec: ChordSpec, rng: () => number, counter: number): TaskType` — new → build; иначе если `rng() < 0.5` → build, иначе по кругу среди `availableTasks(spec)` без build по `counter`.
   - `sessionCounts(p: Progress, now: number): { due: number; newAvailable: number }` — due = карточки с `isDue`, не больше `maxReviews`; newAvailable = `max(0, newPerDay − введённых сегодня)`, но не больше оставшихся в curriculum.
   - `buildSession(p: Progress, now: number, rng: () => number): SessionItem[]` — повторения по возрастанию `due` (лимит), затем новые по curriculum (лимит), с `lesson` перед первой новой карточкой уровня, которого нет в `lessonsSeen`; в конце `progression`, если есть прогрессия с рекомендуемой тональностью (выбор случайный через rng; предпочитать `pop`).
   - `buildPracticeSession(id: CardId, rng): SessionItem[]` — 5 карточек одного аккорда с задачами build, recognize, spell, build, recognize.
   - `recognizeOptions(spec: ChordSpec, rng): ChordSpec[]` — 4 варианта: верный; тот же корень, другой тип того же уровня или ниже; другой корень, тот же тип; случайный (корень и тип ≤ уровню), все без повторов, перемешаны.
-  - `earQuestion(level: Level, rng): ChordSpec` — случайный корень, тип из `earChoices(level)`, inversion 0.
 
-- [ ] **Step 1: Тесты** `session.test.ts`: пустой прогресс, rng=0 → `[lesson 1, card '0:maj:0' build new, card '7:maj:0' build new, card '9:min:0' build new]` без прогрессии (F не введён); прогресс с 4 введёнными C G Am F и всеми due → первые 4 элемента это карточки-повторы, последний элемент `progression pop` в тональности 0; `sessionCounts` при 3 введённых сегодня → newAvailable 0; `maxReviews` 2 и 5 due → 2 повтора. `pickTask(true, …)` → build; `pickTask(false, 1, () => 0.9, 1)` → spell.
-  `distractors.test.ts`: `recognizeOptions(Cmaj)` → 4 уникальных, содержит Cmaj; `earChoices(4)` → 5 типов; `earQuestion(1, () => 0)` → тип maj.
+- [ ] **Step 1: Тесты** `session.test.ts`: пустой прогресс, rng=0 → `[lesson 1, card '0:maj:0' build new, card '7:maj:0' build new, card '9:min:0' build new]` без прогрессии (F не введён); прогресс с 4 введёнными C G Am F и всеми due → первые 4 элемента это карточки-повторы, последний элемент `progression pop` в тональности 0; `sessionCounts` при 3 введённых сегодня → newAvailable 0; `maxReviews` 2 и 5 due → 2 повтора. `pickTask(true, …)` → build; `pickTask(false, Cmaj, () => 0.9, 1)` → spell; `availableTasks({root:0,type:'maj',inversion:1})` не содержит ear; `learnerLevel` с введённой `'0:sus4:0'` → 5.
+  `distractors.test.ts`: `recognizeOptions(Cmaj)` → 4 уникальных, содержит Cmaj; `earChoices(4)` → 5 типов; `earOptions(Csus2, 1, rng)` → содержит `sus2`, длина 3; `earOptions(Cmaj, 6, rng).length` → 6.
 - [ ] **Step 2–4: FAIL → реализовать → PASS.**
 - [ ] **Step 5: Commit** `feat(learning): session builder and answer options`
 
@@ -263,7 +265,7 @@
 - Test: `src/learning/lessons.test.ts`
 
 **Interfaces:**
-- Produces: `type Demo = { kind: 'findNote'; pc: Pc } | { kind: 'showChord'; spec: ChordSpec } | { kind: 'compare'; a: ChordSpec; b: ChordSpec } | { kind: 'none' }`; `interface LessonPage { title: string; text: string; demo: Demo }`; `LESSONS: Record<Level, LessonPage[]>` — по 2–4 страницы, каждая 2–4 предложения, по спецификации (L1: группы чёрных клавиш и C; F; формула мажора 4+3 с показом C; минор 3+4 с сравнением C и Cm. L2: формы по чёрным клавишам, показ D. L3: те же ноты в другом порядке, C и C/E; переход C→F/C. L4: септима ниже октавы, G7; maj7 и m7 сравнение. L5: «изменяем или добавляем одну ноту», sus4 vs maj. L6: нона и дальше, C9; слэш-запись).
+- Produces: `type Demo = { kind: 'findNote'; pc: Pc } | { kind: 'showChord'; spec: ChordSpec } | { kind: 'compare'; a: ChordSpec; b: ChordSpec } | { kind: 'none' }`; `interface LessonPage { title: string; text: string; demo: Demo }`; `LESSONS: Record<Level, LessonPage[]>` — по 2–4 страницы, каждая 2–4 предложения, по спецификации (L1: группы чёрных клавиш и C; F; формула мажора 4+3 с показом C; минор 3+4 с сравнением C и Cm. L2: формы по чёрным клавишам, показ D. L3: те же ноты в другом порядке, C и C/E; запись через дробь «аккорд / нижняя нота»; переход C→F/C. L4: септима ниже октавы, G7; maj7 и m7 сравнение. L5: «изменяем или добавляем одну ноту», sus4 vs maj. L6: нона и дальше, C9; 13 без квинты).
 - [ ] **Step 1: Тест**: у каждого уровня 1–6 от 2 до 4 страниц, у каждой непустые `title`/`text`, текст короче 400 символов.
 - [ ] **Step 2–4. Step 5: Commit** `feat(learning): level intro lessons`
 
@@ -276,6 +278,7 @@
 **Interfaces:**
 - Produces:
   - `getAudioContext(): AudioContext` — создаёт один раз, вызывает `resume()` если `suspended`.
+  - `unlockAudio(): void` — один раз создаёт `<audio loop>` с коротким беззвучным wav в data-URI и вызывает `play()` (приём «unmute» для беззвучного режима iOS); ошибки глотает.
   - `sampleFor(midi: Midi): { file: string; rate: number }` — файлы `C2`…`C7` (midi 36–96) каждый полутон, имена `C4`, `Cs4`; вне диапазона ближайший край с `rate = 2^((midi − sampleMidi)/12)`.
   - `interface Piano { load(onProgress?: (done: number, total: number) => void): Promise<void>; readonly ready: boolean; readonly failed: boolean; noteOn(midi: Midi, velocity?: number): void; noteOff(midi: Midi): void; playChord(midis: Midi[], seconds?: number): void; playArpeggio(midis: Midi[], gap?: number, seconds?: number): void; stopAll(): void; setVolume(v: number): void }`
   - `createPiano(ctx: AudioContext, baseUrl: string, fetchImpl?: typeof fetch): Piano` — буферы через `fetch` + `decodeAudioData`; voice = `AudioBufferSourceNode` → `GainNode` → master; `noteOff` делает экспоненциальное затухание 0.25 с; если `load` не смог загрузить ≥ половины файлов, `failed = true`, а `noteOn` играет запасной синтез (два осциллятора triangle+sine с огибающей 1.2 с).
@@ -298,7 +301,7 @@
 - Produces:
   - `keyboardLayout(lowMidi: Midi, octaves: number): { whites: { midi: Midi; index: number }[]; blacks: { midi: Midi; leftWhites: number }[] }` — `leftWhites` = число белых клавиш слева (чёрная рисуется по центру границы: `left = leftWhites * whiteWidth − blackWidth/2`).
   - `type KeyMark = 'selected' | 'correct' | 'wrong' | 'hint' | 'target'`
-  - `interface KeyboardProps { mode: 'toggle' | 'momentary' | 'display'; selected?: Midi[]; marks?: Partial<Record<Midi, KeyMark>>; labels?: 'none' | 'letters' | 'syllables'; notation?: NotationStyle; disabled?: boolean; onToggle?(midi: Midi): void; onNoteOn?(midi: Midi, time: number): void; onNoteOff?(midi: Midi): void }`
+  - `interface KeyboardProps { mode: 'toggle' | 'momentary' | 'display'; selected?: Midi[]; marks?: Partial<Record<Midi, KeyMark>>; labels?: 'none' | 'letters' | 'syllables'; notation?: NotationStyle; disabled?: boolean; onToggle?(midi: Midi): void; onNoteOn?(midi: Midi, time: number): void; onNoteOff?(midi: Midi): void; shortcuts?: boolean }` (при `shortcuts` клавиши QWERTY `a w s e d f t g y h u j k o l p ;` = midi 60…76, `keydown` без повтора → down, `keyup` → up)
   - `Keyboard` — две октавы от 60; pointer events (`onPointerDown`/`Up`/`Cancel`/`Leave` на каждой клавише, `touch-action: none`, `user-select: none`); в `toggle` каждый pointerdown вызывает `onToggle` и `onNoteOn` + `onNoteOff` через 400 мс (чтобы звучало); в `momentary` down → `onNoteOn`, up → `onNoteOff`; `display` не реагирует. Подписи: буква в нижней части белых клавиш (и на чёрных мелко) при `labels !== 'none'`. Белая клавиша `flex: 1`, высота контейнера `clamp(150px, 24dvh, 220px)`, чёрная 60 % высоты и 58 % ширины белой. Лёгкая вибрация `navigator.vibrate?.(8)` на down.
 
 - [ ] **Step 1: Тест**: `keyboardLayout(60, 2).whites.length` → 14; `.blacks.length` → 10; первая чёрная `{midi:61, leftWhites:1}`; чёрная для midi 66 → `leftWhites: 4`; нет чёрной с `leftWhites` 3 или 7.
@@ -335,12 +338,12 @@
 - Consumes: Tasks 4, 9, 11, 12, 13.
 - Produces:
   - `src/screens/exercises/taskState.ts`: `buildTaskReducer(state, event)` где `state = { selected: Midi[]; phase: 'answering'|'correct'|'wrong'; usedHint: boolean; startedAt: number }`, события `toggle(midi)`, `hint`, `check(voicing, now)`, `reset`; при `toggle` и `selected.length === voicing.notes.length` и autoCheck → `check` автоматически (это решает компонент, reducer принимает `check`). Результат → `AnswerResult` через `finishResult(state, now): AnswerResult`.
-  - `Session({ practice?: CardId })` — строит элементы (`buildSession` или `buildPracticeSession`), ведёт индекс, показывает прогресс-полосу и крестик; на ответ диспатчит `answer` (в practice не диспатчит); `lesson` → `LessonPages` → `lessonSeen`; в конце `sessionDone` (не в practice) и `Summary` (верно/всего, список аккордов с ошибкой, кнопка «На сегодня»).
+  - `Session({ practice?: CardId })` — строит элементы (`buildSession` или `buildPracticeSession`), ведёт индекс, показывает прогресс-полосу и крестик; на ответ диспатчит `answer` (в practice не диспатчит); при ошибке добавляет ту же карточку в конец сессии один раз (перед элементом `progression`); `lesson` → `LessonPages` → `lessonSeen`; `sessionDone` диспатчится, когда отвечена последняя карточка (до прогрессии, не в practice); затем `ProgressionDrill` (если есть) с «Пропустить» и `Summary` (верно/всего, список аккордов с ошибкой, кнопка «На сегодня»).
   - Каждый `*Task` получает `{ spec, voicing, level, notation, syllables, autoCheck, piano, onDone(result: AnswerResult) }`.
   - `BuildTask`: `ChordTitle`, клавиатура `toggle`, подсказка (показывает `voicing.names` и `type.explain`, ставит `marks: hint`), при верном: marks correct + `playChord` + авто-переход через 700 мс; при ошибке: marks wrong/target + `playChord(voicing.notes)` + кнопка «Дальше».
   - `RecognizeTask`: клавиатура `display` с marks target, кнопка «Послушать», 4 кнопки `recognizeOptions`; подписи вариантов через `buildChord(...).slash ?? symbol`.
   - `SpellTask`: `ChordTitle`, 12 кнопок нот (подписи по notation, корни для подписи по family аккорда), автопроверка по количеству, зелёные/красные чипы.
-  - `EarTask`: `earQuestion`, кнопка «Послушать ещё раз» (воспроизводит при монтировании после `ensure()`), кнопки типов с русскими названиями (`nameRu`).
+  - `EarTask`: играет `voicing.notes` карточки при монтировании (после `ensure()`) и по кнопке «Послушать ещё раз»; кнопки `earOptions(spec, learnerLevel, rng)` с русскими названиями (`nameRu`); в `onDone` передаёт `optionCount` для `ratingFor`.
 - [ ] **Step 1: Тест** `taskState.test.ts`: toggle добавляет/убирает; `check` с верным набором → phase correct; `hint` → usedHint true; `finishResult` считает секунды от `startedAt`.
 - [ ] **Step 2–4: FAIL → реализовать → PASS.**
 - [ ] **Step 5: Ручная проверка**: пройти сессию из урока и трёх новых карточек на мобильном вьюпорте; после закрытия и повторного открытия «Сегодня» показывает «новых 0».
