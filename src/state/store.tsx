@@ -1,14 +1,15 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from 'react'
-import { createGistApi, type GistConfig } from './gist'
+import { createRemoteApi, tokenFromSearch, type SyncConfig } from './remote'
 import { loadProgress, saveProgress, type Progress } from './progress'
 import { reducer, type Action } from './reducer'
 import { createSyncEngine, type SyncStatus } from './sync'
+import { SYNC_API_URL } from './syncApiUrl'
 import { loadSyncConfig, saveSyncConfig } from './syncConfig'
 
 export interface SyncControls {
-  config: GistConfig | null
+  config: SyncConfig | null
   status: SyncStatus
-  connect: (token: string) => Promise<GistConfig>
+  connect: (token: string) => Promise<SyncConfig>
   disconnect: () => void
   syncNow: () => Promise<void>
 }
@@ -25,9 +26,19 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   const [progress, dispatch] = useReducer(reducer, undefined, () => loadProgress(localStorage))
   const progressRef = useRef(progress)
   progressRef.current = progress
-  const [config, setConfig] = useState<GistConfig | null>(() => loadSyncConfig(localStorage))
+  const [config, setConfig] = useState<SyncConfig | null>(() => {
+    // A link like …/?t=my-token connects this device; the token then leaves the address bar.
+    const fromLink = tokenFromSearch(window.location.search)
+    if (fromLink) {
+      const cfg = { token: fromLink }
+      saveSyncConfig(localStorage, cfg)
+      window.history.replaceState(null, '', window.location.pathname + window.location.hash)
+      return cfg
+    }
+    return loadSyncConfig(localStorage)
+  })
   const [status, setStatus] = useState<SyncStatus>({ state: 'off' })
-  const api = useMemo(() => createGistApi(), [])
+  const api = useMemo(() => createRemoteApi(SYNC_API_URL), [])
   const engine = useMemo(
     () =>
       createSyncEngine({
@@ -59,7 +70,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(
     async (token: string) => {
-      const cfg = await api.connect(token.trim())
+      const cfg = await api.connect(token)
       saveSyncConfig(localStorage, cfg)
       setConfig(cfg)
       return cfg

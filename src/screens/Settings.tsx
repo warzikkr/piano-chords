@@ -1,6 +1,7 @@
 import { useRef, useState, type ChangeEvent } from 'react'
 import { Button } from '../components/Button'
 import { navigateTo } from '../router'
+import { generateToken, linkForToken } from '../state/remote'
 import { dayKey, exportProgress, importProgress, type Settings as SettingsModel } from '../state/progress'
 import { useProgress } from '../state/store'
 import './today.css'
@@ -99,18 +100,28 @@ export function Settings() {
       })
   }
 
-  const connectSync = async () => {
+  const connectSync = async (value: string) => {
     setConnecting(true)
     setSyncMessage(null)
     try {
-      const cfg = await sync.connect(token)
+      await sync.connect(value)
       setToken('')
-      setSyncMessage(`Подключено как ${cfg.login}`)
+      setSyncMessage('Готово: прогресс теперь привязан к токену')
     } catch (err) {
       setSyncMessage(err instanceof Error ? err.message : 'Не удалось подключить')
     } finally {
       setConnecting(false)
     }
+  }
+
+  const pageUrl = `${window.location.origin}${window.location.pathname}`
+  const shareLink = sync.config ? linkForToken(pageUrl, sync.config.token) : ''
+
+  const copyText = (value: string, done: string) => {
+    navigator.clipboard
+      .writeText(value)
+      .then(() => setSyncMessage(done))
+      .catch(() => setSyncMessage('Не удалось скопировать, выдели текст вручную'))
   }
 
   const statusText =
@@ -183,10 +194,20 @@ export function Settings() {
         <h2 className="h2 setting-title">Синхронизация</h2>
         {sync.config ? (
           <>
-            <p>
-              Подключено как <b>{sync.config.login}</b>.
-            </p>
-            <p className={`small ${sync.status.state === 'error' ? 'feedback--bad' : 'muted'}`}>{statusText || 'Прогресс общий для всех устройств с этим токеном.'}</p>
+            <p className="muted small">Прогресс привязан к токену и общий для всех устройств, где он введён.</p>
+            <div className="setting-row">
+              <span>Токен</span>
+              <code className="code">{sync.config.token}</code>
+            </div>
+            <p className="muted small">Ссылка для другого устройства: открой её там, и прогресс станет общим.</p>
+            <code className="code code--block">{shareLink}</code>
+            <div className="row row--wrap">
+              <Button variant="primary" onClick={() => copyText(shareLink, 'Ссылка скопирована')}>
+                Скопировать ссылку
+              </Button>
+              <Button onClick={() => copyText(sync.config!.token, 'Токен скопирован')}>Скопировать токен</Button>
+            </div>
+            <p className={`small ${sync.status.state === 'error' ? 'feedback--bad' : 'muted'}`}>{statusText || '\u00a0'}</p>
             <div className="row row--wrap">
               <Button onClick={() => void sync.syncNow()}>Синхронизировать сейчас</Button>
               <Button variant="ghost" onClick={sync.disconnect}>
@@ -197,28 +218,26 @@ export function Settings() {
         ) : (
           <>
             <p className="muted small">
-              Один и тот же токен GitHub на телефоне и компьютере даёт общий прогресс: он хранится в твоём приватном Gist. С другим токеном будет другой прогресс.
+              Чтобы заниматься с телефона и компьютера с одним прогрессом, нужен токен. Создай его один раз здесь, а на другом устройстве открой ссылку с ним. Другой токен даст отдельный прогресс.
             </p>
-            <p className="muted small">
-              1. Создай токен GitHub с правом gist.
-              <br />
-              2. Вставь его сюда и нажми «Подключить».
-            </p>
-            <a className="link" href="https://github.com/settings/tokens/new?scopes=gist&description=piano-chords" target="_blank" rel="noreferrer">
-              Создать токен на GitHub ↗
-            </a>
+            <Button variant="primary" size="lg" block onClick={() => void connectSync(generateToken())} disabled={connecting}>
+              {connecting ? 'Подключаю…' : 'Создать токен'}
+            </Button>
+            <p className="muted small">Уже есть токен? Вставь его:</p>
             <input
               id="sync-token"
               className="search"
-              type="password"
+              type="text"
               autoComplete="off"
-              placeholder="ghp_… или github_pat_…"
+              autoCapitalize="off"
+              spellCheck={false}
+              placeholder="например, k7m2-x9qa-4pzt"
               value={token}
               onChange={(e) => setToken(e.target.value)}
-              aria-label="Токен GitHub"
+              aria-label="Токен"
             />
-            <Button variant="primary" onClick={() => void connectSync()} disabled={!token.trim() || connecting}>
-              {connecting ? 'Подключаю…' : 'Подключить'}
+            <Button onClick={() => void connectSync(token)} disabled={!token.trim() || connecting}>
+              Подключить
             </Button>
           </>
         )}

@@ -5,9 +5,11 @@ test('sync config round-trips through storage and tolerates garbage', () => {
   const store: Record<string, string> = {}
   const storage = { getItem: (k: string) => store[k] ?? null, setItem: (k: string, v: string) => void (store[k] = v), removeItem: (k: string) => void delete store[k] }
   expect(loadSyncConfig(storage)).toBeNull()
-  saveSyncConfig(storage, { token: 't', gistId: 'g', login: 'me' })
-  expect(loadSyncConfig(storage)).toEqual({ token: 't', gistId: 'g', login: 'me' })
+  saveSyncConfig(storage, { token: 'my-first-token' })
+  expect(loadSyncConfig(storage)).toEqual({ token: 'my-first-token' })
   store[SYNC_KEY] = '{bad'
+  expect(loadSyncConfig(storage)).toBeNull()
+  store[SYNC_KEY] = JSON.stringify({ token: 'x' })
   expect(loadSyncConfig(storage)).toBeNull()
   saveSyncConfig(storage, null)
   expect(store[SYNC_KEY]).toBeUndefined()

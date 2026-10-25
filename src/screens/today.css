@@ -172,3 +172,18 @@ input[type='range'] {
   text-decoration: none;
   font-weight: 600;
 }
+
+.code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 15px;
+  color: var(--accent);
+  word-break: break-all;
+}
+
+.code--block {
+  display: block;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  font-size: 13px;
+}

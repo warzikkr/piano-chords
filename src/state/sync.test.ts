@@ -1,17 +1,17 @@
 import { expect, test, vi } from 'vitest'
-import type { GistApi, GistConfig } from './gist'
+import type { SyncApi, SyncConfig } from './remote'
 import { createProgress, type Progress } from './progress'
 import { reducer } from './reducer'
 import { createSyncEngine, type SyncStatus } from './sync'
 
-const cfg: GistConfig = { token: 't', gistId: 'g', login: 'anton' }
+const cfg: SyncConfig = { token: 'my-first-token' }
 const ok = { correct: true, usedHint: false, seconds: 4 }
 const T = new Date(2026, 9, 26, 10, 0).getTime()
 
 function fakeApi(initial: Progress | null) {
   let remote = initial
   const pushes: Progress[] = []
-  const api: GistApi = {
+  const api: SyncApi = {
     connect: async () => cfg,
     pull: async () => remote,
     push: async (_c, p) => {
@@ -91,7 +91,7 @@ test('local changes are uploaded once after the debounce, unchanged content is n
 })
 
 test('a failing remote is reported and does not touch local progress', async () => {
-  const api: GistApi = {
+  const api: SyncApi = {
     connect: async () => cfg,
     pull: async () => {
       throw new Error('Нет связи с GitHub')

@@ -1,4 +1,4 @@
-import type { GistApi, GistConfig } from './gist'
+import type { SyncApi, SyncConfig } from './remote'
 import { mergeProgress } from './merge'
 import { exportProgress, type Progress } from './progress'
 
@@ -6,7 +6,7 @@ export type SyncStatus = { state: 'off' } | { state: 'syncing' } | { state: 'ok'
 
 export interface SyncEngine {
   /** Pulls the remote copy, merges it into local progress and uploads the result. */
-  start(cfg: GistConfig): void
+  start(cfg: SyncConfig): void
   stop(): void
   /** Call after every local change; uploads are debounced and skipped when nothing changed. */
   onProgressChanged(p: Progress): void
@@ -14,7 +14,7 @@ export interface SyncEngine {
 }
 
 interface Options {
-  api: GistApi
+  api: SyncApi
   getProgress: () => Progress
   applyMerged: (p: Progress) => void
   onStatus: (s: SyncStatus) => void
@@ -22,7 +22,7 @@ interface Options {
 }
 
 export function createSyncEngine({ api, getProgress, applyMerged, onStatus, debounceMs = 4000 }: Options): SyncEngine {
-  let cfg: GistConfig | null = null
+  let cfg: SyncConfig | null = null
   let timer: ReturnType<typeof setTimeout> | null = null
   let lastSynced = ''
   let busy: Promise<void> = Promise.resolve()
