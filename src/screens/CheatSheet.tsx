@@ -57,18 +57,25 @@ interface SheetSectionProps {
   children: ReactNode
 }
 
-/** A collapsible block of the cheat sheet; native details/summary works on every phone. */
+/** A collapsible block of the cheat sheet. A closed section is not rendered at all. */
 function SheetSection({ id, title, open, onToggle, sectionRef, children }: SheetSectionProps) {
   return (
-    <details className="sheet__section" id={`sheet-${id}`} open={open} ref={sectionRef} onToggle={(e) => onToggle(e.currentTarget.open)}>
-      <summary className="sheet__summary">
+    <section className={`sheet__section ${open ? 'is-open' : ''}`} id={`sheet-${id}`} ref={sectionRef}>
+      <button type="button" className="sheet__summary" aria-expanded={open} onClick={() => onToggle(!open)}>
         <span>{title}</span>
         <span className="sheet__chevron" aria-hidden="true">
           {open ? '−' : '+'}
         </span>
-      </summary>
-      <div className="sheet__body stack">{children}</div>
-    </details>
+      </button>
+      {open && (
+        <div className="sheet__body stack">
+          {children}
+          <Button variant="ghost" block onClick={() => onToggle(false)}>
+            Свернуть
+          </Button>
+        </div>
+      )}
+    </section>
   )
 }
 
@@ -86,7 +93,7 @@ export function CheatSheet() {
     })
   const jump = (id: SectionId) => {
     toggle(id, true)
-    window.setTimeout(() => sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+    window.setTimeout(() => sectionRefs.current[id]?.scrollIntoView({ block: 'start' }), 50)
   }
 
   const Section = ({ id, children }: { id: SectionId; children: ReactNode }) => (
@@ -146,7 +153,8 @@ export function CheatSheet() {
       </div>
       <Section id="circle">
         <p className="muted small">Снаружи мажорные тональности, внутри их параллельные миноры. Соседи по кругу отличаются одним знаком. Нажми на тональность.</p>
-        <svg className="circle" viewBox={`0 0 ${2 * R} ${2 * R}`} width={2 * R} height={2 * R} role="group" aria-label="Круг квинт">
+        <div className="circle-wrap">
+        <svg className="circle" viewBox={`0 0 ${2 * R} ${2 * R}`} width="100%" height="100%" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Круг квинт">
           <circle cx={R} cy={R} r={outer + 24} className="circle__ring" />
           <circle cx={R} cy={R} r={(outer + inner) / 2 + 2} className="circle__ring" />
           {CIRCLE.map((pc, i) => {
@@ -166,6 +174,7 @@ export function CheatSheet() {
           <text x={R} y={R - 6} className="circle__center">{formatNote(key.tonic, notation)}</text>
           <text x={R} y={R + 14} className="circle__center circle__center--sub">{key.sharps ? `${key.sharps}♯` : key.flats ? `${key.flats}♭` : '0'}</text>
         </svg>
+        </div>
         <div className="card stack">
           <div className="row row--between">
             <b>{formatNote(key.tonic, notation)} мажор</b>
