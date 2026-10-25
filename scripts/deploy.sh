@@ -3,7 +3,10 @@
 set -eu
 cd "$(dirname "$0")/.."
 npm run build
+git worktree prune
+git branch -D gh-pages >/dev/null 2>&1 || true
 WORK=$(mktemp -d)
+trap 'git worktree remove --force "$WORK" >/dev/null 2>&1 || true' EXIT
 git worktree add --detach "$WORK" >/dev/null
 (
   cd "$WORK"
@@ -15,5 +18,4 @@ git worktree add --detach "$WORK" >/dev/null
   git commit -q -m "Deploy $(date -u +%Y-%m-%dT%H:%MZ)"
   git push -q -f origin gh-pages
 )
-git worktree remove --force "$WORK"
 echo "Deployed to gh-pages"
