@@ -4,8 +4,8 @@ import { isValidCardId, type CardId } from './theory/chords'
 
 export type TabName = 'today' | 'map' | 'progressions' | 'theory' | 'reference'
 
-export type ReferenceView = 'lab' | 'finder' | 'list'
-export const REFERENCE_VIEWS: ReferenceView[] = ['lab', 'finder', 'list']
+export type ReferenceView = 'lab' | 'finder' | 'sheet' | 'list'
+export const REFERENCE_VIEWS: ReferenceView[] = ['lab', 'finder', 'sheet', 'list']
 
 export type Route =
   | { name: Exclude<TabName, 'reference'> }

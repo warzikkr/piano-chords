@@ -49,3 +49,7 @@ test('ear game route', () => {
   expect(parseRoute('#ear')).toEqual({ name: 'ear' })
   expect(routeHash({ name: 'ear' })).toBe('#ear')
 })
+
+test('cheat sheet view', () => {
+  expect(parseRoute('#reference/sheet')).toEqual({ name: 'reference', view: 'sheet' })
+})

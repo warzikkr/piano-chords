@@ -1,0 +1,147 @@
+.sheet section + section {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--surface-2);
+}
+
+.circle {
+  width: min(100%, 340px);
+  margin: 0 auto;
+  display: block;
+}
+
+.circle__ring {
+  fill: none;
+  stroke: var(--surface-2);
+  stroke-width: 1;
+}
+
+.circle__key {
+  cursor: pointer;
+}
+
+.circle__major {
+  fill: var(--surface);
+  stroke: var(--surface-3);
+  stroke-width: 1;
+}
+
+.circle__minor {
+  fill: var(--surface-2);
+}
+
+.circle__key.is-active .circle__major {
+  fill: var(--accent);
+}
+
+.circle__key.is-active .circle__minor {
+  fill: var(--accent-soft);
+}
+
+.circle__key.is-active .circle__label {
+  fill: var(--accent-ink);
+}
+
+.circle__key.is-active .circle__label--minor {
+  fill: var(--text);
+}
+
+.circle__label {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  pointer-events: none;
+}
+
+.circle__label--minor {
+  font-size: 11px;
+  font-weight: 500;
+  fill: var(--muted);
+}
+
+.circle__center {
+  fill: var(--text);
+  font-size: 26px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.circle__center--sub {
+  font-size: 13px;
+  fill: var(--muted);
+}
+
+.chips--wrap {
+  flex-wrap: wrap;
+  overflow: visible;
+  margin: 0;
+  padding: 0;
+}
+
+.chip__numeral {
+  color: var(--muted);
+  font-size: 12px;
+  margin-right: 2px;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  margin: 0 -16px;
+  padding: 0 16px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.table th {
+  text-align: left;
+  color: var(--muted);
+  font-weight: 500;
+  font-size: 12px;
+  padding: 6px 8px 6px 0;
+  border-bottom: 1px solid var(--surface-2);
+}
+
+.table td {
+  padding: 8px 8px 8px 0;
+  border-bottom: 1px solid var(--surface);
+  vertical-align: top;
+}
+
+.table tbody tr {
+  cursor: pointer;
+}
+
+.inversions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.inversions__item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.inversions__item .kb {
+  height: 90px;
+}
+
+@media (min-width: 700px) {
+  .inversions {
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
