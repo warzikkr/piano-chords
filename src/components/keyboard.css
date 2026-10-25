@@ -1,0 +1,116 @@
+.kb {
+  position: relative;
+  display: flex;
+  width: 100%;
+  height: clamp(150px, 24dvh, 220px);
+  padding: 0 2px;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.kb__white,
+.kb__black {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  transition:
+    background-color 120ms ease,
+    box-shadow 120ms ease,
+    transform 80ms ease;
+}
+
+.kb__white {
+  flex: 1 1 0;
+  position: relative;
+  margin: 0 1px;
+  background: var(--key-white);
+  border-radius: 0 0 7px 7px;
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.12);
+  padding-bottom: 8px;
+  color: #7a6d62;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.kb__black {
+  position: absolute;
+  top: 0;
+  height: 60%;
+  background: var(--key-black);
+  border-radius: 0 0 6px 6px;
+  box-shadow:
+    inset 0 -4px 0 rgba(255, 255, 255, 0.08),
+    0 3px 6px rgba(0, 0, 0, 0.5);
+  z-index: 2;
+  padding-bottom: 6px;
+  color: #a79b90;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.kb__label {
+  pointer-events: none;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.kb__label--black {
+  transform: scale(0.9);
+}
+
+.kb--interactive .kb__white.is-down {
+  background: var(--key-white-down);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.12);
+  transform: translateY(1px);
+}
+
+.kb--interactive .kb__black.is-down {
+  background: var(--key-black-down);
+  transform: translateY(1px);
+}
+
+.kb__white.is-selected,
+.kb__black.is-selected,
+.kb__white.is-target,
+.kb__black.is-target {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.kb__white.is-correct,
+.kb__black.is-correct {
+  background: var(--ok);
+  color: #06250f;
+}
+
+.kb__white.is-wrong,
+.kb__black.is-wrong {
+  background: var(--bad);
+  color: #2a0505;
+}
+
+.kb__white.is-hint,
+.kb__black.is-hint {
+  box-shadow: inset 0 0 0 3px var(--accent);
+}
+
+.kb__black.is-hint {
+  box-shadow:
+    inset 0 0 0 3px var(--accent),
+    0 3px 6px rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 700px) {
+  .kb {
+    height: clamp(180px, 28dvh, 260px);
+  }
+  .kb__white {
+    font-size: 14px;
+  }
+  .kb__black {
+    font-size: 12px;
+  }
+}
