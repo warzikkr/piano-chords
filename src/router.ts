@@ -40,6 +40,10 @@ export function routeHash(r: Route): string {
   }
 }
 
+export function navigateTo(r: Route): void {
+  window.location.hash = routeHash(r)
+}
+
 export function useRoute(): [Route, (r: Route) => void] {
   const [route, setRoute] = useState<Route>(() => parseRoute(window.location.hash))
   useEffect(() => {
