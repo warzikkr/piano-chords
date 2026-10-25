@@ -70,3 +70,10 @@ test('loadProgress drops cards and introductions whose ids or fields are not val
   expect(Object.keys(p.introduced)).toEqual(['7:maj:0'])
   expect(() => importProgress(JSON.stringify(stored))).not.toThrow()
 })
+
+test('progress carries updatedAt and old copies without it load as 0', () => {
+  expect(createProgress().updatedAt).toBe(0)
+  const stored = { ...createProgress() } as Record<string, unknown>
+  delete stored.updatedAt
+  expect(loadProgress({ getItem: () => JSON.stringify(stored) }).updatedAt).toBe(0)
+})

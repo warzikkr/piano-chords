@@ -64,3 +64,16 @@ test('settings patch, lessonSeen once, import and reset', () => {
   const imported = reducer(reset, { type: 'import', progress: p })
   expect(imported).toEqual(p)
 })
+
+test('every change stamps updatedAt', () => {
+  const now = at(2026, 9, 26, 10, 0)
+  let p = reducer(createProgress(), { type: 'answer', id: '0:maj:0', task: 'build', result: ok, isNew: true, now })
+  expect(p.updatedAt).toBe(now)
+  p = reducer(p, { type: 'sessionDone', now: now + 1 })
+  expect(p.updatedAt).toBe(now + 1)
+  p = reducer(p, { type: 'settings', patch: { syllables: true }, now: now + 2 })
+  expect(p.updatedAt).toBe(now + 2)
+  p = reducer(p, { type: 'lessonSeen', level: 2, now: now + 3 })
+  expect(p.updatedAt).toBe(now + 3)
+  expect(reducer(p, { type: 'reset', now: now + 4 }).updatedAt).toBe(now + 4)
+})

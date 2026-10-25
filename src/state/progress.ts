@@ -36,6 +36,8 @@ export interface Progress {
   streak: number
   lastSessionDay: string | null
   settings: Settings
+  /** Epoch ms of the last change; used to merge copies from different devices. */
+  updatedAt: number
 }
 
 export const STORAGE_KEY = 'piano-chords:v1'
@@ -50,6 +52,7 @@ export function createProgress(): Progress {
     streak: 0,
     lastSessionDay: null,
     settings: { ...DEFAULT_SETTINGS },
+    updatedAt: 0,
   }
 }
 
@@ -113,6 +116,7 @@ function normalize(raw: unknown): Progress | null {
     streak: typeof raw.streak === 'number' ? raw.streak : 0,
     lastSessionDay: typeof raw.lastSessionDay === 'string' ? raw.lastSessionDay : null,
     settings: { ...base.settings, ...(raw.settings as Partial<Settings>) },
+    updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : 0,
   }
 }
 

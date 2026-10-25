@@ -4,11 +4,11 @@ import { createProgress, dayKey, emptyDay, type Progress, type Settings } from '
 
 export type Action =
   | { type: 'answer'; id: CardId; task: TaskType; result: AnswerResult; isNew: boolean; now: number; optionCount?: number }
-  | { type: 'lessonSeen'; level: Level }
+  | { type: 'lessonSeen'; level: Level; now?: number }
   | { type: 'sessionDone'; now: number }
-  | { type: 'settings'; patch: Partial<Settings> }
+  | { type: 'settings'; patch: Partial<Settings>; now?: number }
   | { type: 'import'; progress: Progress }
-  | { type: 'reset' }
+  | { type: 'reset'; now?: number }
 
 function yesterdayKey(now: number): string {
   const d = new Date(now)
@@ -17,6 +17,7 @@ function yesterdayKey(now: number): string {
 }
 
 export function reducer(p: Progress, a: Action): Progress {
+  const now = 'now' in a && a.now !== undefined ? a.now : Date.now()
   switch (a.type) {
     case 'answer': {
       const card = p.cards[a.id] ?? newStoredCard(a.now)
@@ -26,6 +27,7 @@ export function reducer(p: Progress, a: Action): Progress {
       const introduced = a.isNew || p.introduced[a.id] === undefined ? { ...p.introduced, [a.id]: p.introduced[a.id] ?? a.now } : p.introduced
       return {
         ...p,
+        updatedAt: now,
         cards: { ...p.cards, [a.id]: reviewCard(card, rating, a.now) },
         introduced,
         days: {
@@ -40,20 +42,20 @@ export function reducer(p: Progress, a: Action): Progress {
       }
     }
     case 'lessonSeen':
-      return p.lessonsSeen.includes(a.level) ? p : { ...p, lessonsSeen: [...p.lessonsSeen, a.level] }
+      return p.lessonsSeen.includes(a.level) ? p : { ...p, updatedAt: now, lessonsSeen: [...p.lessonsSeen, a.level] }
     case 'sessionDone': {
       const today = dayKey(a.now)
       const day = p.days[today] ?? emptyDay()
       let streak = p.streak
       if (p.lastSessionDay === yesterdayKey(a.now)) streak += 1
       else if (p.lastSessionDay !== today) streak = 1
-      return { ...p, streak, lastSessionDay: today, days: { ...p.days, [today]: { ...day, sessionDone: true } } }
+      return { ...p, updatedAt: now, streak, lastSessionDay: today, days: { ...p.days, [today]: { ...day, sessionDone: true } } }
     }
     case 'settings':
-      return { ...p, settings: { ...p.settings, ...a.patch } }
+      return { ...p, updatedAt: now, settings: { ...p.settings, ...a.patch } }
     case 'import':
       return a.progress
     case 'reset':
-      return { ...createProgress(), settings: p.settings }
+      return { ...createProgress(), settings: p.settings, updatedAt: now }
   }
 }
