@@ -6,16 +6,10 @@ import { learnerLevel, sessionCounts } from '../learning/session'
 import { navigateTo } from '../router'
 import { dayKey } from '../state/progress'
 import { useProgress } from '../state/store'
+import { THEORY } from '../learning/theory'
 import { chordSymbol, parseCardId } from '../theory/chords'
+import { plural } from '../ui/text'
 import './today.css'
-
-function plural(n: number, one: string, few: string, many: string): string {
-  const mod10 = n % 10
-  const mod100 = n % 100
-  if (mod10 === 1 && mod100 !== 11) return one
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return few
-  return many
-}
 
 export function Today() {
   const { progress } = useProgress()
@@ -88,6 +82,14 @@ export function Today() {
         {loading && <p className="muted small">Загружаю рояль… {Math.round(loadPct * 100)}%</p>}
         {failed && <p className="muted small">Сэмплы рояля не загрузились, играет запасной звук.</p>}
       </div>
+
+      <button type="button" className="card today__theory" onClick={() => navigateTo({ name: 'theory' })}>
+        <span>
+          <b>Теория</b>
+          <span className="muted small"> · прочитано {progress.theoryRead.length} из {THEORY.length}</span>
+        </span>
+        <span className="muted">→</span>
+      </button>
 
       <p className="muted small today__how">
         Каждый день: повторения по сроку, два-три новых аккорда и одна прогрессия под метроном. Пять-десять минут.

@@ -1,10 +1,14 @@
 import type { ChordSpec, Level } from '../theory/chords'
-import type { Pc } from '../theory/notes'
+import type { Midi, Pc } from '../theory/notes'
 
 export type Demo =
   | { kind: 'findNote'; pc: Pc }
   | { kind: 'showChord'; spec: ChordSpec }
   | { kind: 'compare'; a: ChordSpec; b: ChordSpec }
+  /** Two notes played one after the other, e.g. a third. */
+  | { kind: 'interval'; from: Midi; to: Midi; label: string }
+  /** Chords played in a row, e.g. a progression. */
+  | { kind: 'sequence'; specs: ChordSpec[] }
   | { kind: 'none' }
 
 export interface LessonPage {

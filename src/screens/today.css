@@ -187,3 +187,15 @@ input[type='range'] {
   background: var(--surface-2);
   font-size: 13px;
 }
+
+.today__theory {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  border: 0;
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

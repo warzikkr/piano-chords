@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
-import { fireEvent, render } from '@testing-library/react'
+import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { buildChord, type ChordSpec } from '../../theory/chords'
 import { BuildTask } from './BuildTask'
 import { IntroTask } from './IntroTask'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 const spec: ChordSpec = { root: 0, type: 'maj', inversion: 0 }
 const base = {

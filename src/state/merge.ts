@@ -1,6 +1,6 @@
 import type { StoredCard } from '../learning/scheduler'
 import type { Level } from '../theory/chords'
-import type { DayStats, Progress } from './progress'
+import type { DayStats, Progress, TopicScore } from './progress'
 
 function newerCard(a: StoredCard, b: StoredCard): StoredCard {
   if (a.reps !== b.reps) return a.reps > b.reps ? a : b
@@ -32,6 +32,12 @@ export function mergeProgress(local: Progress, remote: Progress): Progress {
   const days: Record<string, DayStats> = {}
   for (const key of new Set([...Object.keys(local.days), ...Object.keys(remote.days)])) days[key] = mergeDay(local.days[key], remote.days[key])
   const lessonsSeen = [...new Set<Level>([...local.lessonsSeen, ...remote.lessonsSeen])].sort((a, b) => a - b)
+  const theoryRead = [...new Set([...local.theoryRead, ...remote.theoryRead])].sort()
+  const theoryScores: Record<string, TopicScore> = { ...local.theoryScores }
+  for (const [id, s] of Object.entries(remote.theoryScores)) {
+    const l = theoryScores[id]
+    theoryScores[id] = l ? { asked: Math.max(l.asked, s.asked), correct: Math.max(l.correct, s.correct) } : s
+  }
   return {
     version: 1,
     cards,
@@ -42,5 +48,7 @@ export function mergeProgress(local: Progress, remote: Progress): Progress {
     lastSessionDay: newer.lastSessionDay,
     settings: { ...newer.settings },
     updatedAt: Math.max(local.updatedAt, remote.updatedAt),
+    theoryRead,
+    theoryScores,
   }
 }

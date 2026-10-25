@@ -38,6 +38,15 @@ export interface Progress {
   settings: Settings
   /** Epoch ms of the last change; used to merge copies from different devices. */
   updatedAt: number
+  /** Theory topics the learner has read to the end. */
+  theoryRead: string[]
+  /** Self-check answers per theory topic. */
+  theoryScores: Record<string, TopicScore>
+}
+
+export interface TopicScore {
+  asked: number
+  correct: number
 }
 
 export const STORAGE_KEY = 'piano-chords:v1'
@@ -53,6 +62,8 @@ export function createProgress(): Progress {
     lastSessionDay: null,
     settings: { ...DEFAULT_SETTINGS },
     updatedAt: 0,
+    theoryRead: [],
+    theoryScores: {},
   }
 }
 
@@ -117,7 +128,18 @@ function normalize(raw: unknown): Progress | null {
     lastSessionDay: typeof raw.lastSessionDay === 'string' ? raw.lastSessionDay : null,
     settings: { ...base.settings, ...(raw.settings as Partial<Settings>) },
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : 0,
+    theoryRead: Array.isArray(raw.theoryRead) ? raw.theoryRead.filter((x): x is string => typeof x === 'string') : [],
+    theoryScores: validScores(raw.theoryScores),
   }
+}
+
+function validScores(raw: unknown): Record<string, TopicScore> {
+  const out: Record<string, TopicScore> = {}
+  if (!isRecord(raw)) return out
+  for (const [id, v] of Object.entries(raw)) {
+    if (isRecord(v) && typeof v.asked === 'number' && typeof v.correct === 'number') out[id] = { asked: v.asked, correct: v.correct }
+  }
+  return out
 }
 
 export function loadProgress(storage: Pick<Storage, 'getItem'>): Progress {

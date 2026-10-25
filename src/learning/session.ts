@@ -3,7 +3,8 @@ import { KEYS, PROGRESSIONS, keyIsRecommended } from '../theory/progressions'
 import type { Pc } from '../theory/notes'
 import { dayKey, type Progress } from '../state/progress'
 import { CURRICULUM, indexOf, levelOf } from './curriculum'
-import { EAR_TYPES, type Rng } from './distractors'
+import { EAR_TYPES, shuffle, type Rng } from './distractors'
+import { topicById } from './theory'
 import { isDue, type TaskType } from './scheduler'
 
 export type SessionItem =
@@ -15,6 +16,8 @@ export type SessionItem =
   /** Graded exercise; feeds FSRS. */
   | { kind: 'card'; id: CardId; task: TaskType; isNew: boolean }
   | { kind: 'progression'; progressionId: string; keyRoot: Pc }
+  /** A theory self-check question from a topic already read. */
+  | { kind: 'quiz'; topicId: string; question: number }
 
 export function availableTasks(spec: ChordSpec): TaskType[] {
   const tasks: TaskType[] = ['build', 'recognize', 'spell']
@@ -95,10 +98,27 @@ export function buildSession(p: Progress, now: number, rng: Rng, extraNew = 0): 
     .slice(0, due)
     .forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i), isNew: false }))
 
-  // 3. Play a progression made of chords already known.
+  // 3. A couple of theory questions from topics already read.
+  for (const q of pickQuizzes(p, rng, 2)) items.push(q)
+
+  // 4. Play a progression made of chords already known.
   const progression = chooseProgression(p, rng)
   if (progression) items.push(progression)
   return items
+}
+
+export function pickQuizzes(p: Progress, rng: Rng, limit: number): SessionItem[] {
+  const pool: SessionItem[] = []
+  for (const topicId of p.theoryRead) {
+    let topic
+    try {
+      topic = topicById(topicId)
+    } catch {
+      continue
+    }
+    topic.questions.forEach((_, question) => pool.push({ kind: 'quiz', topicId, question }))
+  }
+  return shuffle(pool, rng).slice(0, limit)
 }
 
 export function buildPracticeSession(id: CardId): SessionItem[] {

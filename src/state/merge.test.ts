@@ -48,3 +48,16 @@ test('merging with an empty remote keeps everything local', () => {
   expect(mergeProgress(a, createProgress())).toEqual(a)
   expect(mergeProgress(createProgress(), a)).toEqual(a)
 })
+
+test('theory reading and scores merge as unions and maxima', () => {
+  let a = createProgress()
+  a = reducer(a, { type: 'theoryRead', topicId: 'triads', now: T })
+  a = reducer(a, { type: 'theoryAnswer', topicId: 'triads', correct: true, now: T + 1 })
+  let b = createProgress()
+  b = reducer(b, { type: 'theoryRead', topicId: 'keys', now: T + 2 })
+  b = reducer(b, { type: 'theoryAnswer', topicId: 'triads', correct: true, now: T + 3 })
+  b = reducer(b, { type: 'theoryAnswer', topicId: 'triads', correct: false, now: T + 4 })
+  const m = mergeProgress(a, b)
+  expect(m.theoryRead).toEqual(['keys', 'triads'])
+  expect(m.theoryScores.triads).toEqual({ asked: 2, correct: 1 })
+})

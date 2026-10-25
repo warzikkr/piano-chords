@@ -104,3 +104,17 @@ test('practice session drills one chord five times', () => {
   expect(items.map((i) => (i.kind === 'card' ? i.task : ''))).toEqual(['build', 'recognize', 'spell', 'build', 'recognize'])
   expect(items.every((i) => i.kind === 'card' && i.id === '5:maj:0' && !i.isNew)).toBe(true)
 })
+
+test('a couple of theory questions from topics already read come before the progression', () => {
+  let p = allDue(withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0'], NOW - DAY), NOW)
+  expect(buildSession(p, NOW, zero).some((i) => i.kind === 'quiz')).toBe(false)
+  p = reducer(p, { type: 'theoryRead', topicId: 'triads', now: NOW })
+  p = reducer(p, { type: 'theoryRead', topicId: 'keys', now: NOW })
+  const items = buildSession(p, NOW, zero)
+  const quizzes = items.filter((i) => i.kind === 'quiz')
+  expect(quizzes.length).toBeGreaterThanOrEqual(1)
+  expect(quizzes.length).toBeLessThanOrEqual(2)
+  expect(quizzes.every((q) => q.kind === 'quiz' && ['triads', 'keys'].includes(q.topicId))).toBe(true)
+  expect(items.indexOf(quizzes[0])).toBeLessThan(items.findIndex((i) => i.kind === 'progression'))
+  expect(items.indexOf(quizzes[0])).toBeGreaterThan(items.findLastIndex((i) => i.kind === 'card'))
+})

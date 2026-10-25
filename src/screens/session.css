@@ -182,3 +182,25 @@
   font-size: 22px;
   font-weight: 600;
 }
+
+.options--column {
+  grid-template-columns: 1fr;
+}
+
+.options--column .btn--lg {
+  font-size: 17px;
+  min-height: 52px;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.25;
+  padding: 8px 14px;
+}
+
+.quiz__q {
+  text-wrap: balance;
+  max-width: 460px;
+}
+
+.sequence .chip {
+  font-size: 16px;
+}

@@ -1,20 +1,23 @@
 import { useCallback, useEffect, useState } from 'react'
+import { isTopicId } from './learning/theory'
 import { isValidCardId, type CardId } from './theory/chords'
 
-export type TabName = 'today' | 'map' | 'progressions' | 'reference'
+export type TabName = 'today' | 'map' | 'progressions' | 'theory' | 'reference'
 
 export type Route =
   | { name: TabName }
   | { name: 'settings' }
   | { name: 'session'; practice?: CardId; extraNew?: number }
   | { name: 'chord'; id: CardId }
+  | { name: 'topic'; id: string }
 
-const TABS: TabName[] = ['today', 'map', 'progressions', 'reference']
+const TABS: TabName[] = ['today', 'map', 'progressions', 'theory', 'reference']
 
 export function parseRoute(hash: string): Route {
   const raw = hash.replace(/^#/, '')
   const [pathPart, query = ''] = raw.split('?')
   const [name, param] = pathPart.split('/')
+  if (name === 'theory' && param) return isTopicId(param) ? { name: 'topic', id: param } : { name: 'theory' }
   if (TABS.includes(name as TabName)) return { name: name as TabName }
   if (name === 'settings') return { name: 'settings' }
   if (name === 'chord' && param && isValidCardId(param)) return { name: 'chord', id: param }
@@ -31,6 +34,8 @@ export function routeHash(r: Route): string {
   switch (r.name) {
     case 'chord':
       return `#chord/${r.id}`
+    case 'topic':
+      return `#theory/${r.id}`
     case 'session':
       if (r.practice) return `#session/${r.practice}`
       if (r.extraNew) return `#session?extra=${r.extraNew}`

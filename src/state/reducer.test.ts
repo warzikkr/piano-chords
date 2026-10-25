@@ -77,3 +77,14 @@ test('every change stamps updatedAt', () => {
   expect(p.updatedAt).toBe(now + 3)
   expect(reducer(p, { type: 'reset', now: now + 4 }).updatedAt).toBe(now + 4)
 })
+
+test('theory topics are marked read once and answers are counted per topic', () => {
+  const now = at(2026, 9, 26, 10, 0)
+  let p = reducer(createProgress(), { type: 'theoryRead', topicId: 'triads', now })
+  p = reducer(p, { type: 'theoryRead', topicId: 'triads', now: now + 1 })
+  expect(p.theoryRead).toEqual(['triads'])
+  p = reducer(p, { type: 'theoryAnswer', topicId: 'triads', correct: true, now: now + 2 })
+  p = reducer(p, { type: 'theoryAnswer', topicId: 'triads', correct: false, now: now + 3 })
+  expect(p.theoryScores.triads).toEqual({ asked: 2, correct: 1 })
+  expect(p.updatedAt).toBe(now + 3)
+})

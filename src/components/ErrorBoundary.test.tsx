@@ -1,9 +1,12 @@
 // @vitest-environment jsdom
-import { render } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { ErrorBoundary } from './ErrorBoundary'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 test('a crashing screen shows a message and a way back to Today', () => {
   vi.spyOn(console, 'error').mockImplementation(() => undefined)

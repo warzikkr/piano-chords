@@ -29,3 +29,10 @@ test('routes with ids that are not chords fall back safely', () => {
   expect(parseRoute('#session/0:nope:0')).toEqual({ name: 'session' })
   expect(parseRoute('#chord/6:min7:1')).toEqual({ name: 'chord', id: '6:min7:1' })
 })
+
+test('theory routes', () => {
+  expect(parseRoute('#theory')).toEqual({ name: 'theory' })
+  expect(parseRoute('#theory/triads')).toEqual({ name: 'topic', id: 'triads' })
+  expect(parseRoute('#theory/nope')).toEqual({ name: 'theory' })
+  expect(routeHash({ name: 'topic', id: 'triads' })).toBe('#theory/triads')
+})

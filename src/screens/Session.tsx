@@ -4,12 +4,14 @@ import { buildPracticeSession, buildSession, learnerLevel, type SessionItem } fr
 import type { AnswerResult } from '../learning/scheduler'
 import { navigateTo } from '../router'
 import { useProgress } from '../state/store'
+import { topicById } from '../learning/theory'
 import { buildChord, parseCardId, type CardId } from '../theory/chords'
 import { BuildTask } from './exercises/BuildTask'
 import { EarTask } from './exercises/EarTask'
 import { IntroTask } from './exercises/IntroTask'
 import { LessonPages } from './exercises/LessonPages'
 import { ProgressionDrill } from './exercises/ProgressionDrill'
+import { QuizTask } from './exercises/QuizTask'
 import { RecognizeTask } from './exercises/RecognizeTask'
 import { SpellTask } from './exercises/SpellTask'
 import { Summary } from './exercises/Summary'
@@ -103,6 +105,19 @@ export function Session({ practice, extraNew }: SessionProps) {
         keyRoot={current.keyRoot}
         notation={settings.notation}
         onDone={() => setIndex(index + 1)}
+      />
+    )
+  } else if (current.kind === 'quiz') {
+    const topic = topicById(current.topicId)
+    body = (
+      <QuizTask
+        key={`quiz-${index}`}
+        question={topic.questions[current.question]}
+        topicTitle={topic.title}
+        onDone={(ok) => {
+          if (!practice) dispatch({ type: 'theoryAnswer', topicId: current.topicId, correct: ok })
+          setIndex(index + 1)
+        }}
       />
     )
   } else if (current.kind === 'intro' || current.kind === 'practice') {

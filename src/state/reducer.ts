@@ -9,6 +9,8 @@ export type Action =
   | { type: 'settings'; patch: Partial<Settings>; now?: number }
   | { type: 'import'; progress: Progress }
   | { type: 'reset'; now?: number }
+  | { type: 'theoryRead'; topicId: string; now?: number }
+  | { type: 'theoryAnswer'; topicId: string; correct: boolean; now?: number }
 
 function yesterdayKey(now: number): string {
   const d = new Date(now)
@@ -57,5 +59,15 @@ export function reducer(p: Progress, a: Action): Progress {
       return a.progress
     case 'reset':
       return { ...createProgress(), settings: p.settings, updatedAt: now }
+    case 'theoryRead':
+      return p.theoryRead.includes(a.topicId) ? p : { ...p, updatedAt: now, theoryRead: [...p.theoryRead, a.topicId] }
+    case 'theoryAnswer': {
+      const score = p.theoryScores[a.topicId] ?? { asked: 0, correct: 0 }
+      return {
+        ...p,
+        updatedAt: now,
+        theoryScores: { ...p.theoryScores, [a.topicId]: { asked: score.asked + 1, correct: score.correct + (a.correct ? 1 : 0) } },
+      }
+    }
   }
 }

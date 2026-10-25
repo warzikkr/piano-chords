@@ -273,3 +273,50 @@
 .map-scroll::-webkit-scrollbar {
   display: none;
 }
+
+.topic {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+}
+
+.topic__num {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-weight: 700;
+}
+
+.topic.is-done .topic__num {
+  background: var(--ok);
+  color: #06250f;
+}
+
+.topic__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.topic__title {
+  font-weight: 600;
+  font-size: 17px;
+}
+
+.topic__status {
+  color: var(--muted);
+  white-space: nowrap;
+}

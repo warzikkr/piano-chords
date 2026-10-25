@@ -1,11 +1,14 @@
 // @vitest-environment jsdom
-import { render } from '@testing-library/react'
+import { cleanup, render } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
 import { buildChord, type ChordSpec } from '../../theory/chords'
 import { EarTask } from './EarTask'
 import { RecognizeTask } from './RecognizeTask'
 
-afterEach(() => vi.restoreAllMocks())
+afterEach(() => {
+  cleanup()
+  vi.restoreAllMocks()
+})
 
 function labels(container: HTMLElement): string[] {
   return [...container.querySelectorAll('.options button')].map((b) => b.textContent ?? '')
