@@ -61,3 +61,13 @@ test('theory reading and scores merge as unions and maxima', () => {
   expect(m.theoryRead).toEqual(['keys', 'triads'])
   expect(m.theoryScores.triads).toEqual({ asked: 2, correct: 1 })
 })
+
+test('ear game stats merge as sums and maxima', () => {
+  let a = createProgress()
+  a = reducer(a, { type: 'earGameRound', correct: true, now: T })
+  a = reducer(a, { type: 'earGameFinished', score: 6, now: T + 1 })
+  let b = createProgress()
+  b = reducer(b, { type: 'earGameRound', correct: false, now: T + 2 })
+  b = reducer(b, { type: 'earGameFinished', score: 8, now: T + 3 })
+  expect(mergeProgress(a, b).earGame).toEqual({ rounds: 2, correct: 1, best: 8, games: 2 })
+})

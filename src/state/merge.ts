@@ -50,5 +50,11 @@ export function mergeProgress(local: Progress, remote: Progress): Progress {
     updatedAt: Math.max(local.updatedAt, remote.updatedAt),
     theoryRead,
     theoryScores,
+    earGame: {
+      rounds: local.earGame.rounds + remote.earGame.rounds,
+      correct: local.earGame.correct + remote.earGame.correct,
+      best: Math.max(local.earGame.best, remote.earGame.best),
+      games: local.earGame.games + remote.earGame.games,
+    },
   }
 }

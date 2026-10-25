@@ -84,6 +84,17 @@ export function Today() {
         {failed && <p className="muted small">Сэмплы рояля не загрузились, играет запасной звук.</p>}
       </div>
 
+      <button type="button" className="card today__theory" onClick={() => navigateTo({ name: 'ear' })}>
+        <span>
+          <b>Игра на слух</b>
+          <span className="muted small">
+            {' · '}
+            {progress.earGame.games > 0 ? `лучший результат ${progress.earGame.best} из 10` : 'услышь аккорд и собери его'}
+          </span>
+        </span>
+        <span className="muted">→</span>
+      </button>
+
       <button type="button" className="card today__theory" onClick={() => navigateTo({ name: 'theory' })}>
         <span>
           <b>Теория</b>

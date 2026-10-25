@@ -14,6 +14,8 @@ export type TaskEvent =
   | { type: 'toggle'; midi: Midi; autoCheck?: ChordVoicing }
   | { type: 'hint' }
   | { type: 'check'; voicing: ChordVoicing }
+  /** Give up: the attempt counts as wrong. */
+  | { type: 'fail' }
   | { type: 'reset'; now: number }
 
 export function initialTaskState(now: number): TaskState {
@@ -38,6 +40,8 @@ export function taskReducer(state: TaskState, event: TaskEvent): TaskState {
     case 'check':
       if (state.phase !== 'answering') return state
       return { ...state, phase: checkBuild(state.selected, event.voicing).correct ? 'correct' : 'wrong' }
+    case 'fail':
+      return state.phase === 'answering' ? { ...state, phase: 'wrong' } : state
     case 'reset':
       return initialTaskState(event.now)
   }

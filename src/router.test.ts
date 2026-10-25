@@ -44,3 +44,8 @@ test('reference views', () => {
   expect(routeHash({ name: 'reference', view: 'lab' })).toBe('#reference/lab')
   expect(routeHash({ name: 'reference' })).toBe('#reference')
 })
+
+test('ear game route', () => {
+  expect(parseRoute('#ear')).toEqual({ name: 'ear' })
+  expect(routeHash({ name: 'ear' })).toBe('#ear')
+})

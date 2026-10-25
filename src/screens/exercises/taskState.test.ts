@@ -45,3 +45,9 @@ test('reset starts a fresh attempt', () => {
   s = taskReducer(s, { type: 'reset', now: 2000 })
   expect(s).toEqual(initialTaskState(2000))
 })
+
+test('fail marks the attempt wrong without a check', () => {
+  const s = taskReducer(taskReducer(initialTaskState(1000), { type: 'toggle', midi: 60 }), { type: 'fail' })
+  expect(s.phase).toBe('wrong')
+  expect(taskReducer(s, { type: 'toggle', midi: 62 }).selected).toEqual([60])
+})

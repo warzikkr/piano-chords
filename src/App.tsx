@@ -3,6 +3,7 @@ import { ErrorBoundary } from './components/ErrorBoundary'
 import { TabBar } from './components/TabBar'
 import { useRoute, type TabName } from './router'
 import { ChordDetail } from './screens/ChordDetail'
+import { EarGame } from './screens/EarGame'
 import { Map } from './screens/Map'
 import { Progressions } from './screens/Progressions'
 import { Reference } from './screens/Reference'
@@ -52,6 +53,9 @@ function Screens() {
       break
     case 'session':
       screen = <Session practice={route.practice} extraNew={route.extraNew} />
+      break
+    case 'ear':
+      screen = <EarGame />
       break
   }
 

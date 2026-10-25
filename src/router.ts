@@ -14,6 +14,7 @@ export type Route =
   | { name: 'session'; practice?: CardId; extraNew?: number }
   | { name: 'chord'; id: CardId }
   | { name: 'topic'; id: string }
+  | { name: 'ear' }
 
 const TABS: TabName[] = ['today', 'map', 'progressions', 'theory', 'reference']
 
@@ -25,6 +26,7 @@ export function parseRoute(hash: string): Route {
   if (name === 'reference') return param && REFERENCE_VIEWS.includes(param as ReferenceView) ? { name: 'reference', view: param as ReferenceView } : { name: 'reference' }
   if (TABS.includes(name as TabName)) return { name: name as TabName }
   if (name === 'settings') return { name: 'settings' }
+  if (name === 'ear') return { name: 'ear' }
   if (name === 'chord' && param && isValidCardId(param)) return { name: 'chord', id: param }
   if (name === 'session') {
     if (param && isValidCardId(param)) return { name: 'session', practice: param }

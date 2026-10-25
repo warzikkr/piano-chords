@@ -11,6 +11,8 @@ export type Action =
   | { type: 'reset'; now?: number }
   | { type: 'theoryRead'; topicId: string; now?: number }
   | { type: 'theoryAnswer'; topicId: string; correct: boolean; now?: number }
+  | { type: 'earGameRound'; correct: boolean; now?: number }
+  | { type: 'earGameFinished'; score: number; now?: number }
 
 function yesterdayKey(now: number): string {
   const d = new Date(now)
@@ -61,6 +63,10 @@ export function reducer(p: Progress, a: Action): Progress {
       return { ...createProgress(), settings: p.settings, updatedAt: now }
     case 'theoryRead':
       return p.theoryRead.includes(a.topicId) ? p : { ...p, updatedAt: now, theoryRead: [...p.theoryRead, a.topicId] }
+    case 'earGameRound':
+      return { ...p, updatedAt: now, earGame: { ...p.earGame, rounds: p.earGame.rounds + 1, correct: p.earGame.correct + (a.correct ? 1 : 0) } }
+    case 'earGameFinished':
+      return { ...p, updatedAt: now, earGame: { ...p.earGame, games: p.earGame.games + 1, best: Math.max(p.earGame.best, a.score) } }
     case 'theoryAnswer': {
       const score = p.theoryScores[a.topicId] ?? { asked: 0, correct: 0 }
       return {

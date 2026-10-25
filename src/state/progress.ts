@@ -42,7 +42,18 @@ export interface Progress {
   theoryRead: string[]
   /** Self-check answers per theory topic. */
   theoryScores: Record<string, TopicScore>
+  /** Ear game: chords heard and built on the keyboard. */
+  earGame: EarGameStats
 }
+
+export interface EarGameStats {
+  rounds: number
+  correct: number
+  best: number
+  games: number
+}
+
+export const EMPTY_EAR_GAME: EarGameStats = { rounds: 0, correct: 0, best: 0, games: 0 }
 
 export interface TopicScore {
   asked: number
@@ -64,6 +75,7 @@ export function createProgress(): Progress {
     updatedAt: 0,
     theoryRead: [],
     theoryScores: {},
+    earGame: { ...EMPTY_EAR_GAME },
   }
 }
 
@@ -130,7 +142,14 @@ function normalize(raw: unknown): Progress | null {
     updatedAt: typeof raw.updatedAt === 'number' ? raw.updatedAt : 0,
     theoryRead: Array.isArray(raw.theoryRead) ? raw.theoryRead.filter((x): x is string => typeof x === 'string') : [],
     theoryScores: validScores(raw.theoryScores),
+    earGame: validEarGame(raw.earGame),
   }
+}
+
+function validEarGame(raw: unknown): EarGameStats {
+  if (!isRecord(raw)) return { ...EMPTY_EAR_GAME }
+  const num = (k: keyof EarGameStats) => (typeof raw[k] === 'number' ? (raw[k] as number) : 0)
+  return { rounds: num('rounds'), correct: num('correct'), best: num('best'), games: num('games') }
 }
 
 function validScores(raw: unknown): Record<string, TopicScore> {
