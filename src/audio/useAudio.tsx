@@ -7,7 +7,8 @@ import { createPiano, type Piano } from './sampler'
 export interface AudioState {
   piano: Piano | null
   metronome: Metronome | null
-  ensure: () => Promise<void>
+  /** Creates the audio graph inside a user gesture and resolves once samples are loaded. */
+  ensure: () => Promise<Piano>
   loading: boolean
   progress: number
   failed: boolean
@@ -24,12 +25,12 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [failed, setFailed] = useState(false)
-  const loadPromise = useRef<Promise<void> | null>(null)
+  const loadPromise = useRef<Promise<Piano> | null>(null)
   const volume = userProgress.settings.volume
   const volumeRef = useRef(volume)
   volumeRef.current = volume
 
-  const ensure = useCallback(() => {
+  const ensure = useCallback((): Promise<Piano> => {
     if (loadPromise.current) {
       getAudioContext()
       return loadPromise.current
@@ -44,7 +45,10 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     setLoading(true)
     loadPromise.current = p
       .load((done, total) => setProgress(done / total))
-      .then(() => setFailed(p.failed))
+      .then(() => {
+        setFailed(p.failed)
+        return p
+      })
       .finally(() => setLoading(false))
     return loadPromise.current
   }, [])

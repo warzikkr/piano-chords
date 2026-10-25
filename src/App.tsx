@@ -39,7 +39,7 @@ function Screens() {
       screen = <Settings />
       break
     case 'chord':
-      screen = <ChordDetail />
+      screen = <ChordDetail key={route.id} id={route.id} />
       break
     case 'session':
       screen = <Session practice={route.practice} extraNew={route.extraNew} />

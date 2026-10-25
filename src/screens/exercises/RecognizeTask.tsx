@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { recognizeOptions } from '../../learning/distractors'
 import { Button } from '../../components/Button'
+import { displayRange } from '../../components/displayRange'
 import { Keyboard, type KeyMark } from '../../components/Keyboard'
 import { cardId, chordSymbol } from '../../theory/chords'
 import type { Midi } from '../../theory/notes'
@@ -39,6 +40,7 @@ export function RecognizeTask({ spec, voicing, notation, piano, onDone }: TaskPr
   const marks: Partial<Record<Midi, KeyMark>> = {}
   for (const m of voicing.notes) marks[m] = phase === 'wrong' ? 'hint' : phase === 'correct' ? 'correct' : 'target'
   const preferFlats = voicing.names.some((n) => n.accidental < 0)
+  const range = displayRange(voicing.notes)
 
   return (
     <div className="task">
@@ -59,7 +61,7 @@ export function RecognizeTask({ spec, voicing, notation, piano, onDone }: TaskPr
         </div>
       </div>
       <div className="task__kb">
-        <Keyboard mode="display" marks={marks} notation={notation} preferFlats={preferFlats} />
+        <Keyboard mode="display" marks={marks} lowMidi={range.lowMidi} octaves={range.octaves} notation={notation} preferFlats={preferFlats} />
       </div>
       <div className="task__footer">
         {phase === 'wrong' && (

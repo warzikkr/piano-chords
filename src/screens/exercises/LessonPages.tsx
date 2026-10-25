@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Piano } from '../../audio/sampler'
 import { Button } from '../../components/Button'
 import { ChordTitle } from '../../components/ChordTitle'
+import { displayRange } from '../../components/displayRange'
 import { Keyboard, type KeyMark } from '../../components/Keyboard'
 import { LESSONS } from '../../learning/lessons'
 import { levelInfo } from '../../learning/curriculum'
@@ -67,21 +68,25 @@ export function LessonPages({ level, notation, piano, onDone }: LessonPagesProps
     }
     case 'showChord': {
       const spec = page.demo.spec
+      const notes = buildChord(spec).notes
+      const range = displayRange(notes)
       const marks: Partial<Record<Midi, KeyMark>> = {}
-      for (const m of buildChord(spec).notes) marks[m] = 'target'
+      for (const m of notes) marks[m] = 'target'
       demo = (
         <>
           <ChordTitle spec={spec} notation={notation} size="md" />
           <Button onClick={() => play(spec)}>Послушать</Button>
-          <Keyboard mode="display" marks={marks} notation={notation} />
+          <Keyboard mode="display" marks={marks} lowMidi={range.lowMidi} octaves={range.octaves} notation={notation} />
         </>
       )
       break
     }
     case 'compare': {
       const { a, b } = page.demo
+      const shownNotes = shown ? buildChord(shown).notes : []
+      const range = displayRange(shownNotes)
       const marks: Partial<Record<Midi, KeyMark>> = {}
-      if (shown) for (const m of buildChord(shown).notes) marks[m] = 'target'
+      for (const m of shownNotes) marks[m] = 'target'
       demo = (
         <>
           <div className="row">
@@ -92,7 +97,7 @@ export function LessonPages({ level, notation, piano, onDone }: LessonPagesProps
               {chordSymbol(b, notation)}
             </Button>
           </div>
-          <Keyboard mode="display" marks={marks} notation={notation} />
+          <Keyboard mode="display" marks={marks} lowMidi={range.lowMidi} octaves={range.octaves} notation={notation} />
         </>
       )
       break

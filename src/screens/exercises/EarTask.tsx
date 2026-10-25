@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { earOptions } from '../../learning/distractors'
 import { Button } from '../../components/Button'
 import { ChordTitle } from '../../components/ChordTitle'
+import { displayRange } from '../../components/displayRange'
 import { Keyboard, type KeyMark } from '../../components/Keyboard'
 import { chordType, type ChordTypeId } from '../../theory/chords'
 import type { Midi } from '../../theory/notes'
@@ -41,6 +42,7 @@ export function EarTask({ spec, voicing, learnerLevel, notation, piano, onDone }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase])
 
+  const range = displayRange(voicing.notes)
   const marks: Partial<Record<Midi, KeyMark>> = {}
   if (phase !== 'answering') for (const m of voicing.notes) marks[m] = phase === 'correct' ? 'correct' : 'hint'
 
@@ -63,7 +65,7 @@ export function EarTask({ spec, voicing, learnerLevel, notation, piano, onDone }
         </div>
       </div>
       <div className="task__kb">
-        <Keyboard mode="display" marks={marks} notation={notation} labels={phase === 'answering' ? 'none' : 'letters'} />
+        <Keyboard mode="display" marks={marks} lowMidi={range.lowMidi} octaves={range.octaves} notation={notation} labels={phase === 'answering' ? 'none' : 'letters'} />
       </div>
       <div className="task__footer">
         {phase === 'wrong' && (
