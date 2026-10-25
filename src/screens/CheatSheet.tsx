@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState, type ReactNode } from 'react'
 import { useAudio } from '../audio/useAudio'
 import { Button } from '../components/Button'
 import { displayRange } from '../components/displayRange'
@@ -37,8 +37,72 @@ function signatureText(sharps: number, flats: number, accidentals: NoteName[], n
   return `${n} ${word}: ${accidentals.map((a) => formatNote(a, notation)).join(' ')}`
 }
 
+type SectionId = 'circle' | 'keys' | 'modes' | 'chords' | 'intervals' | 'inversions'
+
+const SECTIONS: { id: SectionId; title: string }[] = [
+  { id: 'circle', title: 'Круг квинт' },
+  { id: 'keys', title: 'Тональности' },
+  { id: 'modes', title: 'Лады' },
+  { id: 'chords', title: 'Формулы аккордов' },
+  { id: 'intervals', title: 'Интервалы' },
+  { id: 'inversions', title: 'Обращения' },
+]
+
+interface SheetSectionProps {
+  id: SectionId
+  title: string
+  open: boolean
+  onToggle: (open: boolean) => void
+  sectionRef: (el: HTMLElement | null) => void
+  children: ReactNode
+}
+
+/** A collapsible block of the cheat sheet; native details/summary works on every phone. */
+function SheetSection({ id, title, open, onToggle, sectionRef, children }: SheetSectionProps) {
+  return (
+    <details className="sheet__section" id={`sheet-${id}`} open={open} ref={sectionRef} onToggle={(e) => onToggle(e.currentTarget.open)}>
+      <summary className="sheet__summary">
+        <span>{title}</span>
+        <span className="sheet__chevron" aria-hidden="true">
+          {open ? '−' : '+'}
+        </span>
+      </summary>
+      <div className="sheet__body stack">{children}</div>
+    </details>
+  )
+}
+
 export function CheatSheet() {
   const { progress } = useProgress()
+  const [open, setOpen] = useState<Set<SectionId>>(() => new Set<SectionId>(['circle']))
+  const sectionRefs = useRef<Partial<Record<SectionId, HTMLElement | null>>>({})
+
+  const toggle = (id: SectionId, value: boolean) =>
+    setOpen((prev) => {
+      const next = new Set(prev)
+      if (value) next.add(id)
+      else next.delete(id)
+      return next
+    })
+  const jump = (id: SectionId) => {
+    toggle(id, true)
+    window.setTimeout(() => sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  const Section = ({ id, children }: { id: SectionId; children: ReactNode }) => (
+    <SheetSection
+      id={id}
+      title={SECTIONS.find((x) => x.id === id)?.title ?? ''}
+      open={open.has(id)}
+      onToggle={(value) => toggle(id, value)}
+      sectionRef={(el) => {
+        sectionRefs.current[id] = el
+      }}
+    >
+      {children}
+    </SheetSection>
+  )
+
   const { ensure } = useAudio()
   const notation = progress.settings.notation
   const [keyPc, setKeyPc] = useState<Pc>(0)
@@ -64,8 +128,8 @@ export function CheatSheet() {
   const playScale = (midis: Midi[]) => void ensure().then((p) => p.playArpeggio([...midis, midis[0] + 12], 0.28, 0.6))
 
   const R = 150
-  const outer = 112
-  const inner = 70
+  const outer = 114
+  const inner = 73
   const pos = (i: number, r: number) => {
     const a = (i * 30 - 90) * (Math.PI / 180)
     return { x: R + r * Math.cos(a), y: R + r * Math.sin(a) }
@@ -73,10 +137,16 @@ export function CheatSheet() {
 
   return (
     <div className="stack sheet">
-      <section className="stack">
-        <h2 className="h2">Круг квинт</h2>
+      <div className="chips">
+        {SECTIONS.map((sec) => (
+          <button key={sec.id} type="button" className={`chip ${open.has(sec.id) ? 'is-active' : ''}`} onClick={() => jump(sec.id)}>
+            {sec.title}
+          </button>
+        ))}
+      </div>
+      <Section id="circle">
         <p className="muted small">Снаружи мажорные тональности, внутри их параллельные миноры. Соседи по кругу отличаются одним знаком. Нажми на тональность.</p>
-        <svg className="circle" viewBox={`0 0 ${2 * R} ${2 * R}`} role="group" aria-label="Круг квинт">
+        <svg className="circle" viewBox={`0 0 ${2 * R} ${2 * R}`} width={2 * R} height={2 * R} role="group" aria-label="Круг квинт">
           <circle cx={R} cy={R} r={outer + 24} className="circle__ring" />
           <circle cx={R} cy={R} r={(outer + inner) / 2 + 2} className="circle__ring" />
           {CIRCLE.map((pc, i) => {
@@ -86,9 +156,9 @@ export function CheatSheet() {
             const active = pc === keyPc
             return (
               <g key={pc} className={`circle__key ${active ? 'is-active' : ''}`} onClick={() => { setKeyPc(pc); setShownChord(null) }}>
-                <circle cx={o.x} cy={o.y} r={21} className="circle__major" />
+                <circle cx={o.x} cy={o.y} r={20} className="circle__major" />
                 <text x={o.x} y={o.y + 1} className="circle__label">{formatNote(k.tonic, notation)}</text>
-                <circle cx={n.x} cy={n.y} r={16} className="circle__minor" />
+                <circle cx={n.x} cy={n.y} r={15} className="circle__minor" />
                 <text x={n.x} y={n.y + 1} className="circle__label circle__label--minor">{formatNote(k.relativeMinor, notation)}m</text>
               </g>
             )
@@ -127,10 +197,9 @@ export function CheatSheet() {
               .join(' · ')}
           </p>
         </div>
-      </section>
+      </Section>
 
-      <section className="stack">
-        <h2 className="h2">Тональности</h2>
+      <Section id="keys">
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -151,10 +220,9 @@ export function CheatSheet() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Section>
 
-      <section className="stack">
-        <h2 className="h2">Лады</h2>
+      <Section id="modes">
         <p className="muted small">Лад это та же мажорная гамма, начатая с другой ступени. Выбери тонику и лад.</p>
         <div className="chips">
           {MAJOR_ROOTS.map((n, pc) => (
@@ -180,10 +248,9 @@ export function CheatSheet() {
             <Button onClick={() => playScale(modeMidis)}>Послушать</Button>
           </div>
         </div>
-      </section>
+      </Section>
 
-      <section className="stack">
-        <h2 className="h2">Формулы аккордов</h2>
+      <Section id="chords">
         <p className="muted small">Ступени считаются от мажорной гаммы корня. Пример от C.</p>
         <div className="table-wrap">
           <table className="table">
@@ -212,10 +279,9 @@ export function CheatSheet() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Section>
 
-      <section className="stack">
-        <h2 className="h2">Интервалы</h2>
+      <Section id="intervals">
         <div className="table-wrap">
           <table className="table">
             <thead>
@@ -236,10 +302,9 @@ export function CheatSheet() {
             </tbody>
           </table>
         </div>
-      </section>
+      </Section>
 
-      <section className="stack">
-        <h2 className="h2">Обращения</h2>
+      <Section id="inversions">
         <p className="muted small">Те же ноты, нижняя поднимается на октаву. Нажми, чтобы послушать.</p>
         <div className="inversions">
           {[0, 1, 2].map((inv) => {
@@ -255,7 +320,7 @@ export function CheatSheet() {
             )
           })}
         </div>
-      </section>
+      </Section>
     </div>
   )
 }

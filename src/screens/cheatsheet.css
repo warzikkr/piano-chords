@@ -1,13 +1,54 @@
-.sheet section + section {
-  margin-top: 8px;
-  padding-top: 16px;
-  border-top: 1px solid var(--surface-2);
+.sheet__section {
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.sheet__summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 16px;
+  list-style: none;
+  font-size: 18px;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.sheet__summary::-webkit-details-marker {
+  display: none;
+}
+
+.sheet__chevron {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.sheet__body {
+  padding: 0 14px 16px;
+}
+
+.sheet__body > .card {
+  background: var(--surface-2);
 }
 
 .circle {
-  width: min(100%, 340px);
-  margin: 0 auto;
   display: block;
+  width: min(100%, 320px);
+  height: auto;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
 }
 
 .circle__ring {
@@ -48,7 +89,7 @@
 
 .circle__label {
   fill: var(--text);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   text-anchor: middle;
   dominant-baseline: middle;
@@ -56,7 +97,7 @@
 }
 
 .circle__label--minor {
-  font-size: 11px;
+  font-size: 9.5px;
   font-weight: 500;
   fill: var(--muted);
 }
@@ -88,8 +129,7 @@
 
 .table-wrap {
   overflow-x: auto;
-  margin: 0 -16px;
-  padding: 0 16px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -109,7 +149,7 @@
 
 .table td {
   padding: 8px 8px 8px 0;
-  border-bottom: 1px solid var(--surface);
+  border-bottom: 1px solid var(--surface-2);
   vertical-align: top;
 }
 
@@ -130,7 +170,7 @@
   padding: 10px 12px;
   border: 0;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--surface-2);
   color: var(--text);
   text-align: left;
   cursor: pointer;
