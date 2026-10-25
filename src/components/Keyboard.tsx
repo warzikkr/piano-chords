@@ -3,7 +3,7 @@ import { formatNote, midiName, syllable, type Midi, type NotationStyle } from '.
 import { keyboardLayout } from './keyboardLayout'
 import './keyboard.css'
 
-export type KeyMark = 'selected' | 'correct' | 'wrong' | 'hint' | 'target'
+export type KeyMark = 'selected' | 'correct' | 'wrong' | 'hint' | 'target' | 'ghost'
 
 export interface KeyboardProps {
   mode: 'toggle' | 'momentary' | 'display'

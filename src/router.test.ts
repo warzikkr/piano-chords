@@ -36,3 +36,11 @@ test('theory routes', () => {
   expect(parseRoute('#theory/nope')).toEqual({ name: 'theory' })
   expect(routeHash({ name: 'topic', id: 'triads' })).toBe('#theory/triads')
 })
+
+test('reference views', () => {
+  expect(parseRoute('#reference')).toEqual({ name: 'reference' })
+  expect(parseRoute('#reference/finder')).toEqual({ name: 'reference', view: 'finder' })
+  expect(parseRoute('#reference/nope')).toEqual({ name: 'reference' })
+  expect(routeHash({ name: 'reference', view: 'lab' })).toBe('#reference/lab')
+  expect(routeHash({ name: 'reference' })).toBe('#reference')
+})

@@ -36,7 +36,7 @@ function Screens() {
       screen = <Progressions />
       break
     case 'reference':
-      screen = <Reference />
+      screen = <Reference view={route.view ?? 'lab'} />
       break
     case 'settings':
       screen = <Settings />
