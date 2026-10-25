@@ -33,8 +33,18 @@ function Stepper({ value, min, max, step = 1, onChange, label }: { value: number
   )
 }
 
+function timeAgo(at: number): string {
+  const min = Math.round((Date.now() - at) / 60000)
+  if (min < 1) return 'только что'
+  if (min < 60) return `${min} мин назад`
+  return new Date(at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })
+}
+
 export function Settings() {
-  const { progress, dispatch } = useProgress()
+  const { progress, dispatch, sync } = useProgress()
+  const [token, setToken] = useState('')
+  const [connecting, setConnecting] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
   const s = progress.settings
   const set = (patch: Partial<SettingsModel>) => dispatch({ type: 'settings', patch })
   const [message, setMessage] = useState<string | null>(null)
@@ -88,6 +98,29 @@ export function Settings() {
         setMessage('Выдели текст и скопируй вручную')
       })
   }
+
+  const connectSync = async () => {
+    setConnecting(true)
+    setSyncMessage(null)
+    try {
+      const cfg = await sync.connect(token)
+      setToken('')
+      setSyncMessage(`Подключено как ${cfg.login}`)
+    } catch (err) {
+      setSyncMessage(err instanceof Error ? err.message : 'Не удалось подключить')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const statusText =
+    sync.status.state === 'syncing'
+      ? 'Синхронизирую…'
+      : sync.status.state === 'ok'
+        ? `Синхронизировано ${timeAgo(sync.status.at)}`
+        : sync.status.state === 'error'
+          ? sync.status.message
+          : ''
 
   const reset = () => {
     dispatch({ type: 'reset' })
@@ -144,6 +177,52 @@ export function Settings() {
         <p className="muted small">
           Звук рояля: сэмплы из набора tonejs-instruments (CC-BY 3.0), укороченные для быстрой загрузки.
         </p>
+      </div>
+
+      <div className="card stack">
+        <h2 className="h2 setting-title">Синхронизация</h2>
+        {sync.config ? (
+          <>
+            <p>
+              Подключено как <b>{sync.config.login}</b>.
+            </p>
+            <p className={`small ${sync.status.state === 'error' ? 'feedback--bad' : 'muted'}`}>{statusText || 'Прогресс общий для всех устройств с этим токеном.'}</p>
+            <div className="row row--wrap">
+              <Button onClick={() => void sync.syncNow()}>Синхронизировать сейчас</Button>
+              <Button variant="ghost" onClick={sync.disconnect}>
+                Отключить
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="muted small">
+              Один и тот же токен GitHub на телефоне и компьютере даёт общий прогресс: он хранится в твоём приватном Gist. С другим токеном будет другой прогресс.
+            </p>
+            <p className="muted small">
+              1. Создай токен GitHub с правом gist.
+              <br />
+              2. Вставь его сюда и нажми «Подключить».
+            </p>
+            <a className="link" href="https://github.com/settings/tokens/new?scopes=gist&description=piano-chords" target="_blank" rel="noreferrer">
+              Создать токен на GitHub ↗
+            </a>
+            <input
+              id="sync-token"
+              className="search"
+              type="password"
+              autoComplete="off"
+              placeholder="ghp_… или github_pat_…"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              aria-label="Токен GitHub"
+            />
+            <Button variant="primary" onClick={() => void connectSync()} disabled={!token.trim() || connecting}>
+              {connecting ? 'Подключаю…' : 'Подключить'}
+            </Button>
+          </>
+        )}
+        {syncMessage && <p className="muted small">{syncMessage}</p>}
       </div>
 
       <div className="card stack">
