@@ -1,0 +1,48 @@
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.player .kb {
+  width: 100%;
+}
+
+.beats {
+  display: flex;
+  gap: 12px;
+}
+
+.beats i {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  transition: background-color 60ms ease;
+}
+
+.beats i.is-on {
+  background: var(--accent);
+}
+
+.beats i:first-child.is-on {
+  background: var(--ok);
+}
+
+.player__bar {
+  min-height: 18px;
+}
+
+.player__result {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.player__controls {
+  justify-content: center;
+  min-height: 56px;
+}

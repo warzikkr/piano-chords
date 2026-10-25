@@ -14,13 +14,17 @@ let unlocked = false
 /** A looping silent <audio> element makes iOS play Web Audio even with the mute switch on. */
 export function unlockAudio(): void {
   if (unlocked) return
-  unlocked = true
   try {
     const audio = document.createElement('audio')
     audio.loop = true
     audio.setAttribute('playsinline', '')
     audio.src = URL.createObjectURL(new Blob([silentWav()], { type: 'audio/wav' }))
-    audio.play().catch(() => undefined)
+    audio
+      .play()
+      .then(() => {
+        unlocked = true
+      })
+      .catch(() => undefined)
   } catch {
     // Not critical: sound still works when the phone is not muted.
   }

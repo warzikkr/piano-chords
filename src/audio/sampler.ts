@@ -19,7 +19,7 @@ export interface Piano {
   readonly failed: boolean
   noteOn(midi: Midi, velocity?: number): void
   noteOff(midi: Midi): void
-  playChord(midis: Midi[], seconds?: number): void
+  playChord(midis: Midi[], seconds?: number, at?: number): void
   playArpeggio(midis: Midi[], gap?: number, seconds?: number): void
   stopAll(): void
   setVolume(v: number): void
@@ -150,8 +150,8 @@ export function createPiano(ctx: AudioContext, baseUrl: string, fetchImpl: typeo
       voices.delete(midi)
       for (const v of list) release(v, ctx.currentTime)
     },
-    playChord(midis, seconds = 1.6) {
-      const t = ctx.currentTime
+    playChord(midis, seconds = 1.6, at?: number) {
+      const t = at ?? ctx.currentTime
       for (const m of midis) trigger(m, 0.85, t, t + seconds)
     },
     playArpeggio(midis, gap = 0.25, seconds = 1.2) {
