@@ -7,6 +7,7 @@ import { useProgress } from '../state/store'
 import { buildChord, parseCardId, type CardId } from '../theory/chords'
 import { BuildTask } from './exercises/BuildTask'
 import { EarTask } from './exercises/EarTask'
+import { IntroTask } from './exercises/IntroTask'
 import { LessonPages } from './exercises/LessonPages'
 import { ProgressionDrill } from './exercises/ProgressionDrill'
 import { RecognizeTask } from './exercises/RecognizeTask'
@@ -104,6 +105,22 @@ export function Session({ practice, extraNew }: SessionProps) {
         onDone={() => setIndex(index + 1)}
       />
     )
+  } else if (current.kind === 'intro' || current.kind === 'practice') {
+    const spec = parseCardId(current.id)
+    const shared = {
+      spec,
+      voicing: buildChord(spec, settings.notation),
+      learnerLevel: level,
+      notation: settings.notation,
+      syllables: settings.syllables,
+      piano,
+    }
+    body =
+      current.kind === 'intro' ? (
+        <IntroTask key={`intro-${index}`} {...shared} onDone={() => setIndex(index + 1)} />
+      ) : (
+        <BuildTask key={`practice-${index}`} {...shared} autoCheck guided onDone={() => setIndex(index + 1)} />
+      )
   } else {
     const spec = parseCardId(current.id)
     const props = {

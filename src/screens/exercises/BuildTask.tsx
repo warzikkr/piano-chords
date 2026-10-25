@@ -8,7 +8,8 @@ import { formatNote, pc, type Midi } from '../../theory/notes'
 import { finishResult, initialTaskState, taskReducer } from './taskState'
 import { notesLine, type TaskProps } from './types'
 
-export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano, onDone }: TaskProps) {
+/** `guided`: the keys stay highlighted, nothing is graded, a miss can simply be retried. */
+export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano, onDone, guided = false }: TaskProps & { guided?: boolean }) {
   const [state, dispatch] = useReducer(taskReducer, Date.now(), initialTaskState)
   const type = chordType(spec.type)
   const finished = useRef(false)
@@ -38,7 +39,7 @@ export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano
   const marks: Partial<Record<Midi, KeyMark>> = {}
   let feedback: string | null = null
   if (state.phase === 'answering') {
-    if (state.usedHint) for (const m of voicing.notes) marks[m] = 'hint'
+    if (state.usedHint || guided) for (const m of voicing.notes) marks[m] = 'hint'
   } else if (state.phase === 'correct') {
     for (const m of state.selected) marks[m] = 'correct'
     feedback = 'Верно'
@@ -60,8 +61,8 @@ export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano
     <div className="task">
       <div className="task__body">
         <ChordTitle spec={spec} notation={notation} />
-        <p className="muted">Нажми {voicing.notes.length} клавиши</p>
-        {state.usedHint && state.phase === 'answering' && (
+        <p className="muted">{guided ? 'Повтори: нажми подсвеченные клавиши' : `Нажми ${voicing.notes.length} клавиши`}</p>
+        {!guided && state.usedHint && state.phase === 'answering' && (
           <p className="hint">
             {notesLine(voicing.names, notation, syllables)}. {type.explain}
           </p>
@@ -85,9 +86,11 @@ export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano
       <div className="task__footer">
         {state.phase === 'answering' && (
           <>
-            <Button variant="ghost" onClick={() => dispatch({ type: 'hint' })} disabled={state.usedHint}>
-              Подсказка
-            </Button>
+            {!guided && (
+              <Button variant="ghost" onClick={() => dispatch({ type: 'hint' })} disabled={state.usedHint}>
+                Подсказка
+              </Button>
+            )}
             <Button variant="ghost" onClick={() => dispatch({ type: 'reset', now: state.startedAt })} disabled={state.selected.length === 0}>
               Сбросить
             </Button>
@@ -98,9 +101,14 @@ export function BuildTask({ spec, voicing, notation, syllables, autoCheck, piano
             )}
           </>
         )}
-        {state.phase === 'wrong' && (
+        {state.phase === 'wrong' && !guided && (
           <Button variant="primary" onClick={finish}>
             Дальше
+          </Button>
+        )}
+        {state.phase === 'wrong' && guided && (
+          <Button variant="primary" onClick={() => dispatch({ type: 'reset', now: Date.now() })}>
+            Ещё раз
           </Button>
         )}
       </div>

@@ -8,6 +8,11 @@ import { isDue, type TaskType } from './scheduler'
 
 export type SessionItem =
   | { kind: 'lesson'; level: Level }
+  /** Meet a new chord: see it, hear it, read its notes. */
+  | { kind: 'intro'; id: CardId }
+  /** Repeat it on the keyboard with the keys highlighted; not graded. */
+  | { kind: 'practice'; id: CardId }
+  /** Graded exercise; feeds FSRS. */
   | { kind: 'card'; id: CardId; task: TaskType; isNew: boolean }
   | { kind: 'progression'; progressionId: string; keyRoot: Pc }
 
@@ -71,20 +76,26 @@ export function chooseProgression(p: Progress, rng: Rng): SessionItem | null {
 export function buildSession(p: Progress, now: number, rng: Rng, extraNew = 0): SessionItem[] {
   const { due, newAvailable } = sessionCounts(p, now)
   const items: SessionItem[] = []
-  dueIds(p, now)
-    .slice(0, due)
-    .forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i), isNew: false }))
 
+  // 1. Learn: lesson for a new level, then meet and repeat each new chord.
+  const newIds = notIntroduced(p).slice(0, newAvailable + extraNew)
   const lessonsShown = new Set<Level>(p.lessonsSeen)
-  for (const id of notIntroduced(p).slice(0, newAvailable + extraNew)) {
+  for (const id of newIds) {
     const level = levelOf(id)
     if (!lessonsShown.has(level)) {
       lessonsShown.add(level)
       items.push({ kind: 'lesson', level })
     }
-    items.push({ kind: 'card', id, task: 'build', isNew: true })
+    items.push({ kind: 'intro', id }, { kind: 'practice', id })
   }
 
+  // 2. Test the new chords, then review what is due.
+  for (const id of newIds) items.push({ kind: 'card', id, task: 'build', isNew: true })
+  dueIds(p, now)
+    .slice(0, due)
+    .forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i), isNew: false }))
+
+  // 3. Play a progression made of chords already known.
   const progression = chooseProgression(p, rng)
   if (progression) items.push(progression)
   return items

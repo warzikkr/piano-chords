@@ -177,3 +177,8 @@
     gap: 18px;
   }
 }
+
+.intro__notes {
+  font-size: 22px;
+  font-weight: 600;
+}

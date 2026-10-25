@@ -100,7 +100,7 @@ export function Keyboard({
   const pointerDown = (midi: Midi) => (e: ReactPointerEvent<HTMLDivElement>) => {
     if (!interactive) return
     e.preventDefault()
-    e.currentTarget.setPointerCapture(e.pointerId)
+    e.currentTarget.setPointerCapture?.(e.pointerId)
     press(midi)
   }
   const pointerUp = (midi: Midi) => (e: ReactPointerEvent<HTMLDivElement>) => {

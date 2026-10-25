@@ -28,24 +28,32 @@ function allDue(p: Progress, now: number): Progress {
   return { ...p, cards }
 }
 
-test('a fresh learner gets the level 1 lesson and three new build cards', () => {
+test('a fresh learner meets each new chord, repeats it, and only then is tested', () => {
   const items = buildSession(createProgress(), NOW, zero)
   expect(items).toEqual<SessionItem[]>([
     { kind: 'lesson', level: 1 },
+    { kind: 'intro', id: '0:maj:0' },
+    { kind: 'practice', id: '0:maj:0' },
+    { kind: 'intro', id: '7:maj:0' },
+    { kind: 'practice', id: '7:maj:0' },
+    { kind: 'intro', id: '9:min:0' },
+    { kind: 'practice', id: '9:min:0' },
     { kind: 'card', id: '0:maj:0', task: 'build', isNew: true },
     { kind: 'card', id: '7:maj:0', task: 'build', isNew: true },
     { kind: 'card', id: '9:min:0', task: 'build', isNew: true },
   ])
 })
 
-test('due reviews come first, then new cards with a lesson, then a progression', () => {
+test('new chords are learned and tested first, then due reviews, then a progression', () => {
   const p = allDue(withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0', '2:min:0', '4:min:0'], NOW - DAY), NOW)
   const items = buildSession({ ...p, lessonsSeen: [1] }, NOW, zero)
-  const reviews = items.slice(0, 6)
-  expect(reviews.every((i) => i.kind === 'card' && !i.isNew)).toBe(true)
-  const newCards = items.filter((i) => i.kind === 'card' && i.isNew)
-  expect(newCards.map((i) => (i.kind === 'card' ? i.id : ''))).toEqual(['2:maj:0', '4:maj:0', '9:maj:0'])
-  expect(items[6]).toEqual({ kind: 'lesson', level: 2 })
+  expect(items[0]).toEqual({ kind: 'lesson', level: 2 })
+  expect(items.slice(1, 7).map((i) => i.kind)).toEqual(['intro', 'practice', 'intro', 'practice', 'intro', 'practice'])
+  const tests = items.filter((i) => i.kind === 'card' && i.isNew)
+  expect(tests.map((i) => (i.kind === 'card' ? i.id : ''))).toEqual(['2:maj:0', '4:maj:0', '9:maj:0'])
+  const reviews = items.filter((i) => i.kind === 'card' && !i.isNew)
+  expect(reviews).toHaveLength(6)
+  expect(items.indexOf(tests[2])).toBeLessThan(items.indexOf(reviews[0]))
   expect(items.filter((i) => i.kind === 'lesson')).toHaveLength(1)
   expect(items.at(-1)).toEqual({ kind: 'progression', progressionId: 'pop', keyRoot: 0 })
 })
