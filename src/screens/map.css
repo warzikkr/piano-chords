@@ -249,7 +249,7 @@
   color: var(--ok);
 }
 
-.seg--block {
+.seg.seg--block {
   display: flex;
   width: 100%;
 }
@@ -353,4 +353,23 @@
 
 .picker .chips + .chips {
   margin-top: 2px;
+}
+
+.seg.seg--tight {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px;
+}
+
+.seg--tight button {
+  min-width: 0;
+  padding: 0 6px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+  .seg.seg--tight {
+    display: flex;
+  }
 }

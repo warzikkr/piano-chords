@@ -16,7 +16,7 @@ export function Reference({ view }: { view: ReferenceView }) {
   return (
     <section className="screen stack">
       <h1 className="h1">Справочник</h1>
-      <div className="seg seg--block">
+      <div className="seg seg--block seg--tight">
         {VIEWS.map((v) => (
           <button key={v.id} type="button" className={view === v.id ? 'is-active' : ''} onClick={() => navigateTo({ name: 'reference', view: v.id })}>
             {v.label}
