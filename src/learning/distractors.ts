@@ -55,15 +55,16 @@ export function recognizeOptions(spec: ChordSpec, rng: Rng): ChordSpec[] {
   return shuffle(result, rng)
 }
 
-export function earChoices(level: Level): ChordTypeId[] {
-  if (level <= 3) return ['maj', 'min']
-  if (level === 4) return ['maj', 'min', 'dom7', 'maj7', 'min7']
-  return [...EAR_TYPES]
-}
-
-export function earOptions(spec: ChordSpec, level: Level, rng: Rng): ChordTypeId[] {
+/**
+ * Answer options for the ear task: only chord types the learner has already met,
+ * always including the card's own type, and at least major vs minor.
+ */
+export function earOptions(spec: ChordSpec, knownTypes: ChordTypeId[], rng: Rng): ChordTypeId[] {
+  const pool = EAR_TYPES.filter((t) => knownTypes.includes(t) || t === spec.type)
+  if (!pool.includes(spec.type)) pool.push(spec.type)
+  for (const fallback of ['maj', 'min'] as ChordTypeId[]) if (pool.length < 2 && !pool.includes(fallback)) pool.push(fallback)
   const others = shuffle(
-    earChoices(level).filter((t) => t !== spec.type),
+    pool.filter((t) => t !== spec.type),
     rng,
   ).slice(0, 5)
   return shuffle([spec.type, ...others], rng)

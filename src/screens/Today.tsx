@@ -22,7 +22,7 @@ export function Today() {
   const info = levelInfo(level)
   const next = CURRICULUM.find((e) => progress.introduced[e.id] === undefined)
   const learned = Object.keys(progress.introduced).length
-  const planned = counts.due + counts.newAvailable
+  const planned = counts.due + counts.newAvailable + counts.weak
   const answeredToday = (today?.reviews ?? 0) + (today?.newCards ?? 0)
   const ring = done ? 1 : planned + answeredToday === 0 ? 0 : answeredToday / (planned + answeredToday)
   const nothingToDo = planned === 0
@@ -76,6 +76,7 @@ export function Today() {
             </Button>
             <p className="muted today__counts">
               повторить {counts.due} · новых {counts.newAvailable}
+              {counts.weak > 0 && ` · закрепить ${counts.weak}`}
             </p>
           </>
         )}

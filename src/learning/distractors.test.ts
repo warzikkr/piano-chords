@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 import { cardId, type ChordSpec } from '../theory/chords'
-import { earChoices, earOptions, recognizeOptions } from './distractors'
+import { earOptions, recognizeOptions } from './distractors'
 
 function lcg(seed: number) {
   let s = seed
@@ -33,19 +33,13 @@ test('recognizeOptions stays within chord types the learner could have met', () 
   expect(options.every((o) => o.type === 'maj' || o.type === 'min')).toBe(true)
 })
 
-test('earChoices grow with the level', () => {
-  expect(earChoices(1)).toEqual(['maj', 'min'])
-  expect(earChoices(3)).toEqual(['maj', 'min'])
-  expect(earChoices(4)).toHaveLength(5)
-  expect(earChoices(5)).toHaveLength(8)
-})
-
-test('earOptions always include the card type and cap at six', () => {
-  expect(earOptions({ root: 0, type: 'sus2', inversion: 0 }, 1, lcg(1))).toHaveLength(3)
-  expect(earOptions({ root: 0, type: 'sus2', inversion: 0 }, 1, lcg(1))).toContain('sus2')
-  expect(earOptions(cmaj, 1, lcg(1))).toHaveLength(2)
-  const six = earOptions(cmaj, 6, lcg(2))
-  expect(six).toHaveLength(6)
-  expect(six).toContain('maj')
-  expect(new Set(six).size).toBe(6)
+test('ear options come only from chord types the learner has met', () => {
+  expect(earOptions(cmaj, ['maj', 'min'], lcg(1))).toHaveLength(2)
+  expect(earOptions(cmaj, ['maj'], lcg(1)).sort()).toEqual(['maj', 'min'])
+  const withSevenths = earOptions(cmaj, ['maj', 'min', 'dom7', 'maj7', 'sus2'], lcg(2))
+  expect(withSevenths.sort()).toEqual(['dom7', 'maj', 'maj7', 'min'])
+  expect(earOptions({ root: 0, type: 'dim', inversion: 0 }, ['maj', 'min'], lcg(1)).sort()).toEqual(['dim', 'maj', 'min'])
+  const many = earOptions(cmaj, ['maj', 'min', 'dom7', 'maj7', 'min7', 'dim', 'aug', 'sus4'], lcg(3))
+  expect(many).toHaveLength(6)
+  expect(many).toContain('maj')
 })

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { useAudio } from '../audio/useAudio'
-import { buildPracticeSession, buildSession, learnerLevel, type SessionItem } from '../learning/session'
+import { planRequeue } from '../learning/requeue'
+import { buildPracticeSession, buildSession, type SessionItem } from '../learning/session'
 import type { AnswerResult } from '../learning/scheduler'
 import { navigateTo } from '../router'
 import { useProgress } from '../state/store'
 import { topicById } from '../learning/theory'
-import { buildChord, parseCardId, type CardId } from '../theory/chords'
+import { CHORD_TYPES, buildChord, cardId, parseCardId, type CardId, type ChordTypeId } from '../theory/chords'
 import { BuildTask } from './exercises/BuildTask'
 import { EarTask } from './exercises/EarTask'
 import { IntroTask } from './exercises/IntroTask'
@@ -29,10 +30,10 @@ export function Session({ practice, extraNew }: SessionProps) {
   const [items, setItems] = useState<SessionItem[]>(build)
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<{ id: CardId; correct: boolean }[]>([])
-  const requeued = useRef(new Set<CardId>())
+  const retries = useRef(new Map<CardId, number>())
   const doneDispatched = useRef(false)
   const settings = progress.settings
-  const level = learnerLevel(progress)
+  const knownTypes: ChordTypeId[] = CHORD_TYPES.filter((t) => Array.from({ length: 12 }, (_, root) => cardId({ root, type: t.id, inversion: 0 })).some((id) => progress.introduced[id] !== undefined)).map((t) => t.id)
 
   useEffect(() => {
     void ensure()
@@ -50,7 +51,7 @@ export function Session({ practice, extraNew }: SessionProps) {
   const close = () => navigateTo(practice ? { name: 'chord', id: practice } : { name: 'today' })
 
   const restart = () => {
-    requeued.current = new Set()
+    retries.current = new Map()
     doneDispatched.current = false
     setAnswers([])
     setIndex(0)
@@ -62,10 +63,10 @@ export function Session({ practice, extraNew }: SessionProps) {
       dispatch({ type: 'answer', id: item.id, task: item.task, result, isNew: item.isNew, now: Date.now(), optionCount })
     }
     setAnswers((a) => [...a, { id: item.id, correct: result.correct }])
-    if (!result.correct && !practice && !requeued.current.has(item.id)) {
-      requeued.current.add(item.id)
-      const insertAt = items.length - (items.at(-1)?.kind === 'progression' ? 1 : 0)
-      setItems([...items.slice(0, insertAt), { kind: 'card', id: item.id, task: 'build', isNew: false }, ...items.slice(insertAt)])
+    if (!result.correct && !practice) {
+      const attempt = retries.current.get(item.id) ?? 0
+      retries.current.set(item.id, attempt + 1)
+      setItems(planRequeue(items, index, item.id, attempt))
     }
     setIndex(index + 1)
   }
@@ -125,7 +126,7 @@ export function Session({ practice, extraNew }: SessionProps) {
     const shared = {
       spec,
       voicing: buildChord(spec, settings.notation),
-      learnerLevel: level,
+      knownTypes,
       notation: settings.notation,
       syllables: settings.syllables,
       piano,
@@ -141,7 +142,7 @@ export function Session({ practice, extraNew }: SessionProps) {
     const props = {
       spec,
       voicing: buildChord(spec, settings.notation),
-      learnerLevel: level,
+      knownTypes,
       notation: settings.notation,
       syllables: settings.syllables,
       autoCheck: settings.autoCheck,

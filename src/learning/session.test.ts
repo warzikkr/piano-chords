@@ -67,7 +67,7 @@ test('review limit and daily new limit are respected', () => {
   const p = allDue(withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0', '2:min:0'], NOW - DAY), NOW)
   const limited = { ...p, settings: { ...p.settings, maxReviews: 2 } }
   expect(buildSession(limited, NOW, zero).filter((i) => i.kind === 'card' && !i.isNew)).toHaveLength(2)
-  expect(sessionCounts(limited, NOW)).toEqual({ due: 2, newAvailable: 3 })
+  expect(sessionCounts(limited, NOW)).toEqual({ due: 2, newAvailable: 3, weak: 0 })
   const today = withIntroduced(['0:maj:0', '7:maj:0', '9:min:0'], NOW)
   expect(sessionCounts(today, NOW).newAvailable).toBe(0)
 })
@@ -80,11 +80,13 @@ test('reviews that are not due yet are not in the session', () => {
 
 test('pickTask', () => {
   const cmaj = { root: 0, type: 'maj' as const, inversion: 0 }
-  expect(pickTask(true, cmaj, () => 0.9, 7)).toBe('build')
-  expect(pickTask(false, cmaj, () => 0.1, 7)).toBe('build')
-  expect(pickTask(false, cmaj, () => 0.9, 0)).toBe('recognize')
-  expect(pickTask(false, cmaj, () => 0.9, 1)).toBe('spell')
-  expect(pickTask(false, cmaj, () => 0.9, 2)).toBe('ear')
+  const known = { ...newStoredCard(NOW), reps: 4, stability: 12 }
+  expect(pickTask(true, cmaj, () => 0.9, 7, known)).toBe('build')
+  expect(pickTask(false, cmaj, () => 0.1, 7, known)).toBe('build')
+  expect(pickTask(false, cmaj, () => 0.9, 0, known)).toBe('recognize')
+  expect(pickTask(false, cmaj, () => 0.9, 1, known)).toBe('spell')
+  expect(pickTask(false, cmaj, () => 0.9, 2, known)).toBe('ear')
+  expect(pickTask(false, cmaj, () => 0.9, 2)).toBe('recognize')
 })
 
 test('availableTasks excludes ear for inversions and non-ear types', () => {
@@ -117,4 +119,50 @@ test('a couple of theory questions from topics already read come before the prog
   expect(quizzes.every((q) => q.kind === 'quiz' && ['triads', 'keys'].includes(q.topicId))).toBe(true)
   expect(items.indexOf(quizzes[0])).toBeLessThan(items.findIndex((i) => i.kind === 'progression'))
   expect(items.indexOf(quizzes[0])).toBeGreaterThan(items.findLastIndex((i) => i.kind === 'card'))
+})
+
+function cardState(p: Progress, id: string, patch: Partial<Progress['cards'][string]>): Progress {
+  return { ...p, cards: { ...p.cards, [id]: { ...p.cards[id], ...patch } } }
+}
+
+test('ear tasks go only to chords that are already known', () => {
+  const cmaj = { root: 0, type: 'maj' as const, inversion: 0 }
+  const fresh = { ...newStoredCard(NOW), reps: 1, stability: 1 }
+  const known = { ...newStoredCard(NOW), reps: 4, stability: 12 }
+  const tasks = (card: typeof fresh) => new Set(Array.from({ length: 9 }, (_, i) => pickTask(false, cmaj, () => 0.9, i, card)))
+  expect(tasks(fresh).has('ear')).toBe(false)
+  expect(tasks(known).has('ear')).toBe(true)
+})
+
+test('chords missed recently come back for extra practice even before they are due', () => {
+  let p = withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0', '2:min:0', '4:min:0'], NOW - 3 * DAY)
+  p = { ...p, settings: { ...p.settings, newPerDay: 0 } }
+  for (const id of Object.keys(p.cards)) p = cardState(p, id, { due: NOW + 5 * DAY, stability: 20, reps: 5 })
+  p = cardState(p, '2:min:0', { lapses: 2, stability: 1, lastReview: NOW - DAY })
+  p = cardState(p, '4:min:0', { lapses: 1, stability: 1.5, lastReview: NOW - 2 * DAY })
+  const items = buildSession(p, NOW, zero)
+  const weak = items.filter((i) => i.kind === 'card' && i.weak)
+  expect(weak.map((i) => (i.kind === 'card' ? i.id : ''))).toEqual(['2:min:0', '4:min:0'])
+  expect(weak.every((i) => i.kind === 'card' && i.task === 'build')).toBe(true)
+  expect(sessionCounts(p, NOW).weak).toBe(2)
+})
+
+test('a couple of well-known chords are mixed in so old material stays fresh', () => {
+  let p = withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0', '2:min:0', '4:min:0'], NOW - 30 * DAY)
+  p = { ...p, settings: { ...p.settings, newPerDay: 0 } }
+  for (const id of Object.keys(p.cards)) p = cardState(p, id, { due: NOW + 20 * DAY, stability: 40, reps: 8 })
+  const items = buildSession(p, NOW, zero)
+  const mixed = items.filter((i) => i.kind === 'card' && i.mixed)
+  expect(mixed).toHaveLength(2)
+  expect(new Set(mixed.map((i) => (i.kind === 'card' ? i.id : ''))).size).toBe(2)
+  expect(items.filter((i) => i.kind === 'card')).toHaveLength(2)
+})
+
+test('weak and mixed cards never duplicate due reviews', () => {
+  let p = allDue(withIntroduced(['0:maj:0', '7:maj:0', '9:min:0', '5:maj:0'], NOW - DAY), NOW)
+  p = cardState(p, '0:maj:0', { lapses: 3, stability: 0.5 })
+  const ids = buildSession(p, NOW, zero)
+    .filter((i) => i.kind === 'card')
+    .map((i) => (i.kind === 'card' ? i.id : ''))
+  expect(new Set(ids).size).toBe(ids.length)
 })

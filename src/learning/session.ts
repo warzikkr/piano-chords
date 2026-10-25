@@ -5,7 +5,7 @@ import { dayKey, type Progress } from '../state/progress'
 import { CURRICULUM, indexOf, levelOf } from './curriculum'
 import { EAR_TYPES, shuffle, type Rng } from './distractors'
 import { topicById } from './theory'
-import { isDue, type TaskType } from './scheduler'
+import { isDue, mastery, type StoredCard, type TaskType } from './scheduler'
 
 export type SessionItem =
   | { kind: 'lesson'; level: Level }
@@ -13,8 +13,8 @@ export type SessionItem =
   | { kind: 'intro'; id: CardId }
   /** Repeat it on the keyboard with the keys highlighted; not graded. */
   | { kind: 'practice'; id: CardId }
-  /** Graded exercise; feeds FSRS. */
-  | { kind: 'card'; id: CardId; task: TaskType; isNew: boolean }
+  /** Graded exercise; feeds FSRS. `weak`: extra practice after recent misses; `mixed`: a known chord kept fresh; `retry`: repeat of a miss in this session. */
+  | { kind: 'card'; id: CardId; task: TaskType; isNew: boolean; weak?: boolean; mixed?: boolean; retry?: boolean }
   | { kind: 'progression'; progressionId: string; keyRoot: Pc }
   /** A theory self-check question from a topic already read. */
   | { kind: 'quiz'; topicId: string; question: number }
@@ -35,10 +35,32 @@ export function learnerLevel(p: Progress): Level {
   return level
 }
 
-export function pickTask(isNew: boolean, spec: ChordSpec, rng: Rng, counter: number): TaskType {
+/** Ear training only makes sense once the chord itself is known. */
+const EAR_MIN_MASTERY = 2
+export const WEAK_LIMIT = 3
+export const MIXED_LIMIT = 2
+
+export function pickTask(isNew: boolean, spec: ChordSpec, rng: Rng, counter: number, card?: StoredCard): TaskType {
   if (isNew || rng() < 0.5) return 'build'
-  const others = availableTasks(spec).filter((t) => t !== 'build')
+  const others = availableTasks(spec).filter((t) => t !== 'build' && (t !== 'ear' || mastery(card) >= EAR_MIN_MASTERY))
   return others[counter % others.length]
+}
+
+/** Chords missed lately that are not due yet: they get extra practice until they settle. */
+export function weakIds(p: Progress, now: number): CardId[] {
+  return Object.entries(p.cards)
+    .filter(([, card]) => card.lapses > 0 && mastery(card) <= 2 && !isDue(card, now))
+    .sort((a, b) => (b[1].lastReview ?? 0) - (a[1].lastReview ?? 0))
+    .map(([id]) => id)
+    .slice(0, WEAK_LIMIT)
+}
+
+/** Well-known chords not due yet; a couple are mixed into every session. */
+export function mixedIds(p: Progress, now: number, rng: Rng, exclude: Set<CardId>): CardId[] {
+  const pool = Object.entries(p.cards)
+    .filter(([id, card]) => !exclude.has(id) && mastery(card) >= 3 && !isDue(card, now))
+    .map(([id]) => id)
+  return shuffle(pool, rng).slice(0, MIXED_LIMIT)
 }
 
 function dueIds(p: Progress, now: number): CardId[] {
@@ -52,13 +74,13 @@ function notIntroduced(p: Progress): CardId[] {
   return CURRICULUM.filter((e) => p.introduced[e.id] === undefined).map((e) => e.id)
 }
 
-export function sessionCounts(p: Progress, now: number): { due: number; newAvailable: number } {
+export function sessionCounts(p: Progress, now: number): { due: number; newAvailable: number; weak: number } {
   const due = Math.min(dueIds(p, now).length, p.settings.maxReviews)
   const today = dayKey(now)
   const introducedToday = Object.values(p.introduced).filter((t) => dayKey(t) === today).length
   const remaining = notIntroduced(p).length
   const newAvailable = Math.max(0, Math.min(p.settings.newPerDay - introducedToday, remaining))
-  return { due, newAvailable }
+  return { due, newAvailable, weak: weakIds(p, now).length }
 }
 
 export function chooseProgression(p: Progress, rng: Rng): SessionItem | null {
@@ -96,7 +118,16 @@ export function buildSession(p: Progress, now: number, rng: Rng, extraNew = 0): 
   for (const id of newIds) items.push({ kind: 'card', id, task: 'build', isNew: true })
   dueIds(p, now)
     .slice(0, due)
-    .forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i), isNew: false }))
+    .forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i, p.cards[id]), isNew: false }))
+
+  // 2b. Extra practice for recent misses, and a couple of known chords to keep them fresh.
+  const present = new Set(items.flatMap((i) => (i.kind === 'card' ? [i.id] : [])))
+  for (const id of weakIds(p, now)) {
+    if (present.has(id)) continue
+    present.add(id)
+    items.push({ kind: 'card', id, task: 'build', isNew: false, weak: true })
+  }
+  mixedIds(p, now, rng, present).forEach((id, i) => items.push({ kind: 'card', id, task: pickTask(false, parseCardId(id), rng, i + 7, p.cards[id]), isNew: false, mixed: true }))
 
   // 3. A couple of theory questions from topics already read.
   for (const q of pickQuizzes(p, rng, 2)) items.push(q)

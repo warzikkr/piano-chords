@@ -8,8 +8,8 @@ import { chordType, type ChordTypeId } from '../../theory/chords'
 import type { Midi } from '../../theory/notes'
 import type { TaskProps } from './types'
 
-export function EarTask({ spec, voicing, learnerLevel, notation, piano, onDone }: TaskProps) {
-  const [options] = useState(() => earOptions(spec, learnerLevel, Math.random))
+export function EarTask({ spec, voicing, knownTypes, notation, piano, onDone }: TaskProps) {
+  const [options] = useState(() => earOptions(spec, knownTypes, Math.random))
   const [chosen, setChosen] = useState<ChordTypeId | null>(null)
   const startedAt = useRef(Date.now())
   const played = useRef(false)

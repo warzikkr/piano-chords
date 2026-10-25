@@ -1,13 +1,14 @@
 import type { Piano } from '../../audio/sampler'
 import type { AnswerResult } from '../../learning/scheduler'
-import type { ChordSpec, ChordVoicing, Level } from '../../theory/chords'
+import type { ChordSpec, ChordTypeId, ChordVoicing } from '../../theory/chords'
 import type { NotationStyle, NoteName } from '../../theory/notes'
 import { formatNote, syllable } from '../../theory/notes'
 
 export interface TaskProps {
   spec: ChordSpec
   voicing: ChordVoicing
-  learnerLevel: Level
+  /** Chord types the learner has met; the ear task picks its answers from them. */
+  knownTypes: ChordTypeId[]
   notation: NotationStyle
   syllables: boolean
   autoCheck: boolean

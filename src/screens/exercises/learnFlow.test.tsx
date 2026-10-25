@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
-import { buildChord, type ChordSpec } from '../../theory/chords'
+import { buildChord, type ChordSpec, type ChordTypeId } from '../../theory/chords'
 import { BuildTask } from './BuildTask'
 import { IntroTask } from './IntroTask'
 
@@ -14,7 +14,7 @@ const spec: ChordSpec = { root: 0, type: 'maj', inversion: 0 }
 const base = {
   spec,
   voicing: buildChord(spec),
-  learnerLevel: 1 as const,
+  knownTypes: ['maj', 'min'] as ChordTypeId[],
   notation: 'latin' as const,
   syllables: false,
   autoCheck: true,

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, expect, test, vi } from 'vitest'
-import { buildChord, type ChordSpec } from '../../theory/chords'
+import { buildChord, type ChordSpec, type ChordTypeId } from '../../theory/chords'
 import { EarTask } from './EarTask'
 import { RecognizeTask } from './RecognizeTask'
 
@@ -19,7 +19,7 @@ function props() {
   return {
     spec,
     voicing: buildChord(spec),
-    learnerLevel: 5 as const,
+    knownTypes: ['maj', 'min', 'dom7', 'maj7', 'min7', 'dim', 'aug', 'sus4'] as ChordTypeId[],
     notation: 'latin' as const,
     syllables: false,
     autoCheck: true,
