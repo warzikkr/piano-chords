@@ -38,9 +38,14 @@ export function Settings() {
   const s = progress.settings
   const set = (patch: Partial<SettingsModel>) => dispatch({ type: 'settings', patch })
   const [message, setMessage] = useState<string | null>(null)
+  const [text, setText] = useState('')
+  const [confirmReset, setConfirmReset] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const textArea = useRef<HTMLTextAreaElement>(null)
 
   const exportFile = () => {
+    setText(exportProgress(progress))
+    setMessage('Прогресс в поле ниже: скопируй его или сохрани файл')
     const blob = new Blob([exportProgress(progress)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -65,11 +70,29 @@ export function Settings() {
     }
   }
 
-  const reset = () => {
-    if (window.confirm('Сбросить весь прогресс? Это нельзя отменить.')) {
-      dispatch({ type: 'reset' })
-      setMessage('Прогресс сброшен')
+  const importText = () => {
+    try {
+      dispatch({ type: 'import', progress: importProgress(text) })
+      setMessage('Прогресс загружен')
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : 'Не удалось прочитать текст')
     }
+  }
+
+  const copy = () => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => setMessage('Скопировано'))
+      .catch(() => {
+        textArea.current?.select()
+        setMessage('Выдели текст и скопируй вручную')
+      })
+  }
+
+  const reset = () => {
+    dispatch({ type: 'reset' })
+    setConfirmReset(false)
+    setMessage('Прогресс сброшен')
   }
 
   return (
@@ -125,16 +148,43 @@ export function Settings() {
 
       <div className="card stack">
         <h2 className="h2 setting-title">Данные</h2>
-        <p className="muted small">Прогресс хранится только на этом устройстве. Файл экспорта можно загрузить на другом.</p>
+        <p className="muted small">Прогресс хранится только на этом устройстве. Экспорт можно перенести на другое: файлом или текстом.</p>
         <div className="row row--wrap">
-          <Button onClick={exportFile}>Экспорт в файл</Button>
-          <Button onClick={() => fileInput.current?.click()}>Импорт из файла</Button>
+          <Button onClick={exportFile}>Экспорт</Button>
+          <Button onClick={copy} disabled={!text}>
+            Скопировать
+          </Button>
+          <Button onClick={() => fileInput.current?.click()}>Из файла</Button>
+          <Button onClick={importText} disabled={!text}>
+            Загрузить из текста
+          </Button>
           <input ref={fileInput} type="file" accept="application/json,.json" hidden onChange={(e) => void importFile(e)} />
         </div>
-        <Button variant="danger" onClick={reset}>
-          Сбросить прогресс
-        </Button>
+        <textarea
+          ref={textArea}
+          id="progress-json"
+          className="json-area"
+          rows={4}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Сюда можно вставить сохранённый прогресс"
+          aria-label="Прогресс в виде текста"
+        />
         {message && <p className="muted small">{message}</p>}
+        {confirmReset ? (
+          <div className="row row--wrap">
+            <Button variant="danger" onClick={reset}>
+              Да, сбросить всё
+            </Button>
+            <Button variant="ghost" onClick={() => setConfirmReset(false)}>
+              Отмена
+            </Button>
+          </div>
+        ) : (
+          <Button variant="danger" onClick={() => setConfirmReset(true)}>
+            Сбросить прогресс
+          </Button>
+        )}
       </div>
     </section>
   )
