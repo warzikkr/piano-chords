@@ -17,6 +17,7 @@ npm run dev
 - `npm run typecheck` — проверка типов.
 - `npm run build` — сборка в `dist/` для любого статического хостинга (пути относительные).
 - `npm run preview` — посмотреть сборку локально.
+- `npm run deploy` — собрать и выложить на GitHub Pages (ветка `gh-pages`).
 
 ## На айфон
 
