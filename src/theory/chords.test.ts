@@ -6,6 +6,7 @@ import {
   chordType,
   inversionLabel,
   inversionsOf,
+  isValidCardId,
   parseCardId,
   rootName,
   type ChordSpec,
@@ -112,4 +113,15 @@ test('cardId round-trips a spec', () => {
 test('rootName picks the family spelling', () => {
   expect(formatNote(rootName(1, 'maj'))).toBe('D♭')
   expect(formatNote(rootName(1, 'dim'))).toBe('C♯')
+})
+
+test('isValidCardId accepts only real chords with a possible inversion', () => {
+  expect(isValidCardId('0:maj:0')).toBe(true)
+  expect(isValidCardId('6:min7:3')).toBe(true)
+  expect(isValidCardId('0:maj:3')).toBe(false)
+  expect(isValidCardId('0:dom9:1')).toBe(false)
+  expect(isValidCardId('12:maj:0')).toBe(false)
+  expect(isValidCardId('-1:maj:0')).toBe(false)
+  expect(isValidCardId('x')).toBe(false)
+  expect(isValidCardId('0:nope:0')).toBe(false)
 })

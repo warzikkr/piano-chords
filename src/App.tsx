@@ -1,4 +1,5 @@
 import { AudioProvider } from './audio/useAudio'
+import { ErrorBoundary } from './components/ErrorBoundary'
 import { TabBar } from './components/TabBar'
 import { useRoute, type TabName } from './router'
 import { ChordDetail } from './screens/ChordDetail'
@@ -48,7 +49,7 @@ function Screens() {
 
   return (
     <div className="app">
-      {screen}
+      <ErrorBoundary key={route.name}>{screen}</ErrorBoundary>
       {tab && <TabBar current={tab} onSelect={(name) => navigate({ name })} />}
     </div>
   )

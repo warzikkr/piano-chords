@@ -1,11 +1,28 @@
 let context: AudioContext | null = null
+let hooksInstalled = false
+
+/** iOS reports 'interrupted' after a call or screen lock; anything but 'running' needs a resume. */
+function resumeIfNeeded(): void {
+  if (context && context.state !== 'running') void context.resume()
+}
+
+function installResumeHooks(): void {
+  if (hooksInstalled) return
+  hooksInstalled = true
+  window.addEventListener('pointerup', resumeIfNeeded)
+  window.addEventListener('touchend', resumeIfNeeded)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') resumeIfNeeded()
+  })
+}
 
 export function getAudioContext(): AudioContext {
   if (!context) {
     const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext
     context = new Ctor()
+    installResumeHooks()
   }
-  if (context.state === 'suspended') void context.resume()
+  resumeIfNeeded()
   return context
 }
 

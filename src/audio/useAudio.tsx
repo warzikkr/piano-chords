@@ -31,11 +31,14 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   volumeRef.current = volume
 
   const ensure = useCallback((): Promise<Piano> => {
+    // Both calls are idempotent and cheap; repeating them on every gesture lets a
+    // context that iOS interrupted (or a silent-switch unlock that failed outside a
+    // gesture) recover on the next tap.
+    unlockAudio()
     if (loadPromise.current) {
       getAudioContext()
       return loadPromise.current
     }
-    unlockAudio()
     const ctx = getAudioContext()
     const p = createPiano(ctx, SAMPLES_URL)
     p.setVolume(volumeRef.current)

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { earOptions } from '../../learning/distractors'
 import { Button } from '../../components/Button'
 import { ChordTitle } from '../../components/ChordTitle'
@@ -9,7 +9,7 @@ import type { Midi } from '../../theory/notes'
 import type { TaskProps } from './types'
 
 export function EarTask({ spec, voicing, learnerLevel, notation, piano, onDone }: TaskProps) {
-  const options = useMemo(() => earOptions(spec, learnerLevel, Math.random), [spec, learnerLevel])
+  const [options] = useState(() => earOptions(spec, learnerLevel, Math.random))
   const [chosen, setChosen] = useState<ChordTypeId | null>(null)
   const startedAt = useRef(Date.now())
   const played = useRef(false)

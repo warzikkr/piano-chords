@@ -141,3 +141,15 @@ export function parseCardId(id: CardId): ChordSpec {
   const [root, type, inversion] = id.split(':')
   return { root: Number(root), type: type as ChordTypeId, inversion: Number(inversion) }
 }
+
+/** True for `root:type:inversion` ids that name a real chord in a possible inversion. */
+export function isValidCardId(id: string): boolean {
+  const parts = id.split(':')
+  if (parts.length !== 3) return false
+  const root = Number(parts[0])
+  const inversion = Number(parts[2])
+  const type = parts[1] as ChordTypeId
+  if (!TYPE_BY_ID.has(type)) return false
+  if (!Number.isInteger(root) || root < 0 || root > 11) return false
+  return Number.isInteger(inversion) && inversion >= 0 && inversion < inversionsOf(type)
+}

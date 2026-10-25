@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { recognizeOptions } from '../../learning/distractors'
 import { Button } from '../../components/Button'
 import { displayRange } from '../../components/displayRange'
@@ -8,7 +8,7 @@ import type { Midi } from '../../theory/notes'
 import type { TaskProps } from './types'
 
 export function RecognizeTask({ spec, voicing, notation, piano, onDone }: TaskProps) {
-  const options = useMemo(() => recognizeOptions(spec, Math.random), [spec])
+  const [options] = useState(() => recognizeOptions(spec, Math.random))
   const [chosen, setChosen] = useState<number | null>(null)
   const startedAt = useRef(Date.now())
   const finished = useRef(false)

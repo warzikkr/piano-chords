@@ -57,3 +57,16 @@ test('dayKey uses the local calendar date', () => {
   expect(dayKey(new Date(2026, 0, 5, 23, 59).getTime())).toBe('2026-01-05')
   expect(dayKey(new Date(2026, 0, 6, 0, 1).getTime())).toBe('2026-01-06')
 })
+
+test('loadProgress drops cards and introductions whose ids or fields are not valid', () => {
+  const good = { due: 1, stability: 2, difficulty: 3, elapsedDays: 0, scheduledDays: 1, learningSteps: 0, reps: 1, lapses: 0, state: 2, lastReview: 1 }
+  const stored = {
+    ...createProgress(),
+    cards: { '7:maj:0': good, 'bad-id': good, '0:maj:0': { ...good, due: 'tomorrow' } },
+    introduced: { '7:maj:0': 5, 'bad-id': 5, '0:maj:0': 'yesterday' },
+  }
+  const p = loadProgress({ getItem: () => JSON.stringify(stored) })
+  expect(Object.keys(p.cards)).toEqual(['7:maj:0'])
+  expect(Object.keys(p.introduced)).toEqual(['7:maj:0'])
+  expect(() => importProgress(JSON.stringify(stored))).not.toThrow()
+})

@@ -5,11 +5,8 @@ import { useProgress } from '../state/store'
 import { CHORD_TYPES, buildChord, cardId, type ChordTypeId } from '../theory/chords'
 import { MAJOR_ROOTS, formatNote, type Pc } from '../theory/notes'
 import { notesLine } from './exercises/types'
+import { matchesQuery, normalizeQuery } from './referenceSearch'
 import './map.css'
-
-function normalize(q: string): string {
-  return q.trim().toLowerCase().replace(/#/g, '♯').replace(/(?<=[a-h])b/g, '♭')
-}
 
 export function Reference() {
   const { progress } = useProgress()
@@ -20,10 +17,10 @@ export function Reference() {
 
   const roots: Pc[] = root === null ? MAJOR_ROOTS.map((_, i) => i) : [root]
   const types = type === null ? CHORD_TYPES : CHORD_TYPES.filter((t) => t.id === type)
-  const q = normalize(query)
+  const q = normalizeQuery(query)
   const items = roots
     .flatMap((r) => types.map((t) => buildChord({ root: r, type: t.id, inversion: 0 }, notation)))
-    .filter((v) => q === '' || v.symbol.toLowerCase().includes(q))
+    .filter((v) => matchesQuery(v, q))
 
   return (
     <section className="screen stack">

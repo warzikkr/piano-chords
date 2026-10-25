@@ -1,4 +1,4 @@
-import type { CardId, Level } from '../theory/chords'
+import { isValidCardId, type CardId, type Level } from '../theory/chords'
 import type { NotationStyle } from '../theory/notes'
 import type { StoredCard } from '../learning/scheduler'
 
@@ -69,13 +69,45 @@ function isRecord(x: unknown): x is Record<string, unknown> {
   return typeof x === 'object' && x !== null && !Array.isArray(x)
 }
 
+const CARD_NUMBER_FIELDS: (keyof StoredCard)[] = [
+  'due',
+  'stability',
+  'difficulty',
+  'elapsedDays',
+  'scheduledDays',
+  'learningSteps',
+  'reps',
+  'lapses',
+  'state',
+]
+
+function isStoredCard(x: unknown): x is StoredCard {
+  if (!isRecord(x)) return false
+  if (!CARD_NUMBER_FIELDS.every((f) => typeof x[f] === 'number' && Number.isFinite(x[f]))) return false
+  return x.lastReview === null || typeof x.lastReview === 'number'
+}
+
+function validCards(raw: unknown): Record<CardId, StoredCard> {
+  const out: Record<CardId, StoredCard> = {}
+  if (!isRecord(raw)) return out
+  for (const [id, card] of Object.entries(raw)) if (isValidCardId(id) && isStoredCard(card)) out[id] = card
+  return out
+}
+
+function validIntroduced(raw: unknown): Record<CardId, number> {
+  const out: Record<CardId, number> = {}
+  if (!isRecord(raw)) return out
+  for (const [id, t] of Object.entries(raw)) if (isValidCardId(id) && typeof t === 'number') out[id] = t
+  return out
+}
+
 function normalize(raw: unknown): Progress | null {
   if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.cards) || !isRecord(raw.settings)) return null
   const base = createProgress()
   return {
     version: 1,
-    cards: raw.cards as Record<CardId, StoredCard>,
-    introduced: isRecord(raw.introduced) ? (raw.introduced as Record<CardId, number>) : {},
+    cards: validCards(raw.cards),
+    introduced: validIntroduced(raw.introduced),
     lessonsSeen: Array.isArray(raw.lessonsSeen) ? (raw.lessonsSeen as Level[]) : [],
     days: isRecord(raw.days) ? (raw.days as Record<string, DayStats>) : {},
     streak: typeof raw.streak === 'number' ? raw.streak : 0,

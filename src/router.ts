@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { CardId } from './theory/chords'
+import { isValidCardId, type CardId } from './theory/chords'
 
 export type TabName = 'today' | 'map' | 'progressions' | 'reference'
 
@@ -17,9 +17,9 @@ export function parseRoute(hash: string): Route {
   const [name, param] = pathPart.split('/')
   if (TABS.includes(name as TabName)) return { name: name as TabName }
   if (name === 'settings') return { name: 'settings' }
-  if (name === 'chord' && param) return { name: 'chord', id: param }
+  if (name === 'chord' && param && isValidCardId(param)) return { name: 'chord', id: param }
   if (name === 'session') {
-    if (param) return { name: 'session', practice: param }
+    if (param && isValidCardId(param)) return { name: 'session', practice: param }
     const extra = new URLSearchParams(query).get('extra')
     if (extra && Number(extra) > 0) return { name: 'session', extraNew: Number(extra) }
     return { name: 'session' }
